@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import { resolvePath, assertExists } from "./path-utils";
+import { sanitizeFileContent } from "./sanitize-content";
 import { ok, fail, ToolDefinition } from "./types";
 
 interface EditParams {
@@ -45,10 +46,21 @@ export const FileEditTool: ToolDefinition<EditParams> = {
         return fail("old_string and new_string are required");
       if (old_string === new_string) return fail("old_string and new_string are identical");
 
+      // Both sides may carry read-result artefacts ("N:" prefixes, tags).
+      const oldClean = sanitizeFileContent(old_string);
+      const newClean = sanitizeFileContent(new_string);
+
       const abs = resolvePath(ctx.projectDir, params.file_path as string);
       assertExists(abs);
       const content = fs.readFileSync(abs, "utf-8");
-      const count = countOccurrences(content, old_string);
+
+      // Try the sanitized old_string first, then the raw one.
+      let needle = oldClean;
+      let count = countOccurrences(content, needle);
+      if (count === 0 && oldClean !== old_string) {
+        needle = old_string;
+        count = countOccurrences(content, needle);
+      }
 
       if (count === 0) return fail("old_string not found in file " + abs);
       if (count > 1 && !params.replaceAll)
@@ -63,8 +75,8 @@ export const FileEditTool: ToolDefinition<EditParams> = {
       }
 
       const updated = params.replaceAll
-        ? content.split(old_string).join(new_string)
-        : content.replace(old_string, new_string);
+        ? content.split(needle).join(newClean)
+        : content.replace(needle, newClean);
 
       fs.writeFileSync(abs, updated, "utf-8");
       return ok("Updated " + abs + " (" + replaced + " replacement(s)).");
