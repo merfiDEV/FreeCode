@@ -1,5 +1,7 @@
 name: "Release: Build & Publish"
 
+# Releases are created from version tags only, e.g.
+#   git tag v0.2.0 && git push origin v0.2.0
 on:
   push:
     tags:
@@ -14,6 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -28,6 +32,9 @@ jobs:
 
       - name: Install dependencies
         run: npm install --no-fund --no-audit
+
+      - name: Type-check
+        run: npx tsc --noEmit
 
       - name: Build and Publish
         run: npm run build:win

@@ -144,20 +144,25 @@ log("scripts:", Object.keys(pkg.scripts || {}).join(", "));
 
 ## Releases
 
-Pushing to `main` triggers the **CI: Bump, Build & Release** workflow
-(`.github/workflows/build.yml`):
+Two workflows keep releases predictable:
 
-1. **bump** — computes the next patch version, writes it into `package.json`
-   and `package-lock.json`, and commits the change.
-2. **build** — runs on `windows-latest`, produces the NSIS installer, the
-   **portable executable** and a zip, then uploads them as artifacts.
-3. **release** — publishes a GitHub Release tagged `v<version>` with the
-   generated release notes and attaches the artifacts.
+- **CI: Build** (`.github/workflows/build.yml`) — runs on every push to `main`.
+  Type-checks and builds the NSIS installer, the **portable executable** and a
+  zip, then uploads them as artifacts. It does **not** bump the version and does
+  **not** publish a release.
+- **Release: Build & Publish** (`.github/workflows/release.yml`) — runs only on
+  `v*` tags. It syncs the version from the tag, builds and publishes a GitHub
+  Release with the artifacts attached.
 
-To trigger a release manually, bump the version and push a `v*` tag; the
-`Release: Build & Publish` workflow (`.github/workflows/release.yml`) handles
-tagged builds. Local packaging uses `npm run build:win:portable:local`, which
-writes artifacts to `release/`.
+To cut a release:
+
+```bash
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+Local packaging uses `npm run build:win:portable:local`, which writes artifacts
+to `release/`.
 
 ## Platforms
 
