@@ -46,23 +46,23 @@ const STYLE = `
   right: 16px;
   bottom: 16px;
   z-index: 2147483000;
-  width: 420px;
+  width: 300px;
   max-width: calc(100vw - 32px);
   max-height: 85vh;
   overflow-y: auto;
   box-sizing: border-box;
   font-family: 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.4;
   color: #E6E1E5;
   background: #1C1924;
   border: 1px solid rgba(56, 52, 68, 0.5);
-  border-radius: 24px;
-  padding: 24px;
+  border-radius: 20px;
+  padding: 16px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
   -webkit-font-smoothing: antialiased;
 }
 #freecode-overlay.fc-collapsed { display: none; }
@@ -73,11 +73,11 @@ const STYLE = `
 #freecode-overlay .fc-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 9px;
 }
 
 #freecode-overlay .fc-heading {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -137,8 +137,8 @@ const STYLE = `
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 16px;
-  border-radius: 12px;
+  padding: 5px 13px;
+  border-radius: 10px;
   background: #38304D;
   color: #d6cded;
   font-size: 12px;
@@ -166,8 +166,8 @@ const STYLE = `
 #freecode-overlay .fc-divider {
   border: none;
   border-top: 1px solid rgba(56, 52, 68, 0.4);
-  margin: 0 -4px;
-  width: calc(100% + 8px);
+  margin: 0 -3px;
+  width: calc(100% + 6px);
 }
 
 #freecode-overlay .fc-delay-row {
@@ -176,7 +176,7 @@ const STYLE = `
   gap: 10px;
 }
 #freecode-overlay .fc-delay-row input {
-  width: 64px;
+  width: 54px;
   text-align: center;
   background: #15121c;
   border: 1px solid rgba(56, 52, 68, 0.8);
@@ -234,16 +234,16 @@ const STYLE = `
 #freecode-overlay .fc-code-box {
   background: #121017;
   border: 1px solid rgba(56, 52, 68, 0.4);
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: 10px;
+  padding: 9px;
   font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
-  font-size: 11px;
-  line-height: 1.6;
+  font-size: 10px;
+  line-height: 1.55;
   color: #d1d5db;
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-word;
-  max-height: 220px;
+  max-height: 200px;
   overflow-y: auto;
   user-select: text;
 }
