@@ -67,3 +67,15 @@ export function setProjectDirForSession(
   else delete store[k];
   writeStore(store);
 }
+
+/** Last project directory remembered for a provider (any of its sessions). */
+export function getLastProjectDirForProvider(providerId: string): string | null {
+  const store = readStore();
+  const prefix = providerId + ":";
+  let best: string | null = null;
+  for (const [k, v] of Object.entries(store)) {
+    if (k.startsWith(prefix) && v) best = v;
+  }
+  if (best && !fs.existsSync(best)) return null;
+  return best;
+}

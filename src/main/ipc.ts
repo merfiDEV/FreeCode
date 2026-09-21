@@ -8,6 +8,7 @@ import { getAllProviders, getProvider, getProviderByUrl } from "../providers";
 import { createMainWindow } from "./window";
 import { getHubWindow } from "./hub-window";
 import { getAllProviderStates, touchProvider } from "./provider-state";
+import { getLastProjectDirForProvider } from "./project-store";
 
 const registry = createDefaultRegistry();
 const jsRunner = new JsRunner(registry);
@@ -72,7 +73,8 @@ export function registerIpcHandlers(): void {
     setProjectDir(event.sender, dir);
 
     // Remember the last project for this provider so the hub can show it.
-    const providerId = getProviderId(event.sender);
+    const providerId =
+      getProviderId(event.sender) ?? getProviderByUrl(event.sender.getURL())?.id ?? null;
     if (providerId) touchProvider(providerId, { lastProjectDir: dir });
 
     const prompt = buildInitPrompt(dir, registry);
@@ -104,12 +106,15 @@ export function registerIpcHandlers(): void {
     const states = getAllProviderStates();
     return getAllProviders().map((p) => {
       const st = states[p.id] ?? { lastProjectDir: null, lastUsedAt: null };
+      // Prefer the recorded last project; fall back to any project remembered
+      // in projects.json (covers cases where the state file was not updated).
+      const projectDir = st.lastProjectDir ?? getLastProjectDirForProvider(p.id);
       return {
         id: p.id,
         name: p.name,
         host: p.host,
         loggedIn: hasLoginMarker(p.id),
-        projectDir: st.lastProjectDir,
+        projectDir,
         lastUsedAt: st.lastUsedAt,
       };
     });
