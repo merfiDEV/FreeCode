@@ -1,6 +1,6 @@
 {
   "name": "freecode",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "freecode — desktop AI agent for z.ai (zero API cost)",
   "main": "dist/main/index.js",
   "scripts": {
