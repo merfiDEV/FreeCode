@@ -1,100 +1,107 @@
-{
-  "name": "freecode",
-  "version": "0.2.0",
-  "description": "freecode — desktop AI agent for z.ai (zero API cost)",
-  "main": "dist/main/index.js",
-  "scripts": {
-    "build": "tsc && node scripts/copy-assets.js",
-    "watch": "tsc -w",
-    "start": "npm run build && electron .",
-    "clean": "rimraf dist release",
-    "icons": "node scripts/make-icon.js",
-    "build:win": "npm run build && electron-builder --win --publish always",
-    "build:win:local": "npm run build && electron-builder --win --publish never",
-    "build:win:portable": "npm run build && electron-builder --win --config.win.target=portable --publish always",
-    "build:win:portable:local": "npm run build && electron-builder --win --config.win.target=portable --publish never"
-  },
-  "keywords": [
-    "z.ai",
-    "electron",
-    "ai",
-    "agent",
-    "freecode"
-  ],
-  "author": {
-    "name": "MerfiDEV",
-    "url": "https://github.com/merfiDEV"
-  },
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/merfiDEV/FreeCode.git"
-  },
-  "bugs": {
-    "url": "https://github.com/merfiDEV/FreeCode/issues"
-  },
-  "homepage": "https://github.com/merfiDEV/FreeCode#readme",
-  "engines": {
-    "node": ">=16.0.0"
-  },
-  "os": [
-    "win32",
-    "darwin",
-    "linux"
-  ],
-  "devDependencies": {
-    "@types/node": "^22.7.0",
-    "@types/turndown": "^5.0.6",
-    "electron": "^33.0.0",
-    "electron-builder": "^24.13.3",
-    "png-to-ico": "^3.0.2",
-    "rimraf": "^6.0.1",
-    "sharp": "^0.35.4",
-    "typescript": "^5.6.2"
-  },
-  "build": {
-    "appId": "com.freecode.freecode",
-    "productName": "freecode",
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "merfiDEV",
-        "repo": "FreeCode",
-        "releaseType": "release"
-      }
-    ],
-    "directories": {
-      "output": "release"
-    },
-    "win": {
-      "target": [
-        "nsis",
-        "portable",
-        "zip"
-      ],
-      "icon": "build/icon.ico",
-      "artifactName": "freecode-win-v${version}-${arch}.${ext}"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "artifactName": "freecode-win-v${version}.${ext}"
-    },
-    "portable": {
-      "artifactName": "freecode-win-v${version}-portable.${ext}"
-    },
-    "files": [
-      "dist/**/*",
-      "build/icon.ico",
-      "build/icon.png",
-      "package.json"
-    ]
-  },
-  "dependencies": {
-    "@joplin/turndown-plugin-gfm": "^1.0.68",
-    "@modelcontextprotocol/sdk": "^1.30.0",
-    "turndown": "^7.2.4"
-  }
-}
+<path>D:\code\ICE\crulh\ZAIToType\package.json</path>
+<type>file</type>
+<content>
+1: {
+2:   "name": "freecode",
+3:   "version": "0.2.0",
+4:   "description": "freecode — desktop AI agent for z.ai (zero API cost)",
+5:   "main": "dist/main/index.js",
+6:   "scripts": {
+7:     "build": "tsc && node scripts/copy-assets.js",
+8:     "watch": "tsc -w",
+9:     "start": "npm run build && electron .",
+10:     "clean": "rimraf dist release",
+11:     "icons": "node scripts/make-icon.js",
+12:     "build:win": "npm run build && electron-builder --win --publish always",
+13:     "build:win:local": "npm run build && electron-builder --win --publish never",
+14:     "build:win:portable": "npm run build && electron-builder --win --config.win.target=portable --publish always",
+15:     "build:win:portable:local": "npm run build && electron-builder --win --config.win.target=portable --publish never"
+16:   },
+17:   "keywords": [
+18:     "z.ai",
+19:     "electron",
+20:     "ai",
+21:     "agent",
+22:     "freecode"
+23:   ],
+24:   "author": {
+25:     "name": "MerfiDEV",
+26:     "url": "https://github.com/merfiDEV"
+27:   },
+28:   "license": "MIT",
+29:   "repository": {
+30:     "type": "git",
+31:     "url": "git+https://github.com/merfiDEV/FreeCode.git"
+32:   },
+33:   "bugs": {
+34:     "url": "https://github.com/merfiDEV/FreeCode/issues"
+35:   },
+36:   "homepage": "https://github.com/merfiDEV/FreeCode#readme",
+37:   "engines": {
+38:     "node": ">=16.0.0"
+39:   },
+40:   "os": [
+41:     "win32",
+42:     "darwin",
+43:     "linux"
+44:   ],
+45:   "devDependencies": {
+46:     "@types/node": "^22.7.0",
+47:     "@types/turndown": "^5.0.6",
+48:     "electron": "^33.0.0",
+49:     "electron-builder": "^24.13.3",
+50:     "png-to-ico": "^3.0.2",
+51:     "rimraf": "^6.0.1",
+52:     "sharp": "^0.35.4",
+53:     "typescript": "^5.6.2"
+54:   },
+55:   "build": {
+56:     "appId": "com.freecode.freecode",
+57:     "productName": "freecode",
+58:     "publish": [
+59:       {
+60:         "provider": "github",
+61:         "owner": "merfiDEV",
+62:         "repo": "FreeCode",
+63:         "releaseType": "release"
+64:       }
+65:     ],
+66:     "directories": {
+67:       "output": "release"
+68:     },
+69:     "win": {
+70:       "target": [
+71:         "nsis",
+72:         "portable",
+73:         "zip"
+74:       ],
+75:       "icon": "build/icon.ico",
+76:       "artifactName": "freecode-win-v${version}-${arch}.${ext}"
+77:     },
+78:     "nsis": {
+79:       "oneClick": false,
+80:       "allowToChangeInstallationDirectory": true,
+81:       "createDesktopShortcut": true,
+82:       "createStartMenuShortcut": true,
+83:       "artifactName": "freecode-win-v${version}.${ext}"
+84:     },
+85:     "portable": {
+86:       "artifactName": "freecode-win-v${version}-portable.${ext}"
+87:     },
+88:     "files": [
+89:       "dist/**/*",
+90:       "build/icon.ico",
+91:       "build/icon.png",
+92:       "package.json"
+93:     ]
+94:   },
+95:   "dependencies": {
+96:     "@joplin/turndown-plugin-gfm": "^1.0.68",
+97:     "@modelcontextprotocol/sdk": "^1.30.0",
+98:     "turndown": "^7.2.4"
+99:   }
+100: }
+101: 
+
+(End of file. Total 101 lines.)
+</content>
