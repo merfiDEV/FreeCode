@@ -3,7 +3,7 @@ import { ok, fail, asObject } from "./types";
 import { getSkillManager } from "../main/skill-manager";
 
 /**
- * Skill tools: user-defined extensions under <projectDir>/.cuckoo/skills/.
+ * Skill tools: user-defined extensions under <projectDir>/.freecode/skills/.
  *   - skillList()                       — what is available
  *   - skillLoad(name)                   — read SKILL.md + tool.js
  *   - skillExecute(skill, fn, args)     — call an exported function
@@ -28,7 +28,7 @@ export const SkillListTool: ToolDefinition<Record<string, never>> = {
       if (available.length === 0) {
         return ok(
           "No custom Skills in this project.\n" +
-            "Create <projectDir>/.cuckoo/skills/<name>/SKILL.md to define one; " +
+            "Create <projectDir>/.freecode/skills/<name>/SKILL.md to define one; " +
             "an optional tool.js may export callable functions.",
         );
       }

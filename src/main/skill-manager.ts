@@ -5,12 +5,12 @@ import * as vm from "vm";
 /**
  * SkillManager — loads and runs custom Skills.
  *
- * A Skill is a directory under <projectDir>/.cuckoo/skills/<name>/ with a
+ * A Skill is a directory under <projectDir>/.freecode/skills/<name>/ with a
  * required SKILL.md (Markdown instructions) and an optional tool.js that
  * exports one or more async functions.
  */
 
-const SKILLS_DIR_NAME = ".cuckoo";
+const SKILLS_DIR_NAME = ".freecode";
 const SKILLS_SUBDIR = "skills";
 
 export interface SkillScan {
