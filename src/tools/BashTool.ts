@@ -2,6 +2,7 @@ import { exec } from "child_process";
 import * as path from "path";
 import { isDangerousCommand } from "./dangerous";
 import { ok, fail, asObject, ToolDefinition } from "./types";
+import { joinCommandArgs } from "./command-args";
 import { TIMEOUTS, OUTPUT_LIMIT } from "../shared/constants";
 
 interface BashParams {
@@ -21,13 +22,16 @@ export const BashTool: ToolDefinition<BashParams> = {
   description: "Run a shell command (cmd.exe on Windows).",
   risky: true,
   mapArgs: (a) => {
-    const opts = asObject(a[1]);
-    return { command: a[0], workdir: opts.workdir, timeoutMs: opts.timeoutMs };
+    // The options object may sit at the end (after any number of command parts).
+    const last = a[a.length - 1];
+    const opts = last && typeof last === "object" && !Array.isArray(last) ? asObject(last) : {};
+    return { command: joinCommandArgs(a), workdir: opts.workdir, timeoutMs: opts.timeoutMs };
   },
   async execute(params, ctx) {
-    if (!params.command || typeof params.command !== "string") return fail("command is required");
-    if (isDangerousCommand(params.command))
-      return fail("Command rejected by the safety policy: " + params.command);
+    const command = typeof params.command === "string" ? params.command.trim() : "";
+    if (!command) return fail("command is required");
+    if (isDangerousCommand(command))
+      return fail("Command rejected by the safety policy: " + command);
 
     const cwd = params.workdir
       ? path.resolve(ctx.projectDir ?? ".", params.workdir as string)
@@ -39,7 +43,7 @@ export const BashTool: ToolDefinition<BashParams> = {
 
     return new Promise((resolve) => {
       exec(
-        params.command,
+        command,
         { cwd, timeout, maxBuffer: 8 * 1024 * 1024, windowsHide: true },
         (err, stdout, stderr) => {
           let out = stdout ?? "";
