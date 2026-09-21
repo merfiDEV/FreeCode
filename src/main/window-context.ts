@@ -1,6 +1,7 @@
 import type { BrowserWindow } from "electron";
 import { getProviderByUrl } from "../providers";
 import { getProjectDirForSession, setProjectDirForSession } from "./project-store";
+import { getProviderState } from "./provider-state";
 
 interface WindowCtx {
   win: BrowserWindow;
@@ -9,6 +10,8 @@ interface WindowCtx {
   providerId: string | null;
   /** Session id of the conversation currently shown in this window. */
   sessionId: string | null;
+  /** Last URL we synchronised with, used by the polling safety net. */
+  currentUrl: string;
 }
 
 /**
@@ -17,16 +20,31 @@ interface WindowCtx {
  */
 const PENDING = "__pending__";
 
+/** URL values that look like an id but are really fixed routes. */
+const NON_SESSION_IDS = new Set(["new-chat", "new", "guest", "home", "chat"]);
+
 const contexts = new Map<number, WindowCtx>();
 
+/** Normalize a raw route id: drop well-known placeholders. */
+function normalizeSessionId(id: string | null): string | null {
+  if (!id) return null;
+  return NON_SESSION_IDS.has(id.toLowerCase()) ? null : id;
+}
+
 export function addWindow(win: BrowserWindow): void {
-  const ctx: WindowCtx = { win, projectDir: null, providerId: null, sessionId: null };
+  const ctx: WindowCtx = {
+    win,
+    projectDir: null,
+    providerId: null,
+    sessionId: null,
+    currentUrl: "",
+  };
   contexts.set(win.id, ctx);
   win.on("closed", () => contexts.delete(win.id));
 
   const sync = (url: string): void => {
     const provider = getProviderByUrl(url);
-    const sessionId = provider ? provider.extractSessionId(url) : null;
+    const sessionId = provider ? normalizeSessionId(provider.extractSessionId(url)) : null;
     const providerId = provider ? provider.id : null;
 
     const sameTarget = sessionId === ctx.sessionId && providerId === ctx.providerId;
@@ -48,7 +66,17 @@ export function addWindow(win: BrowserWindow): void {
         setProjectDirForSession(providerId, sessionId, pending);
         setProjectDirForSession(providerId, PENDING, null);
       }
-      ctx.projectDir = getProjectDirForSession(providerId, sessionId);
+      // Per-session directory, then the provider's last used directory.
+      const perSession = getProjectDirForSession(providerId, sessionId);
+      const lastUsed = getProviderState(providerId).lastProjectDir;
+      ctx.projectDir = perSession ?? lastUsed ?? null;
+      console.log(
+        "[freecode] sync:",
+        providerId,
+        "session=" + sessionId,
+        "perSession=" + (perSession ?? "-"),
+        "lastUsed=" + (lastUsed ?? "-"),
+      );
     } else {
       ctx.projectDir = previous ? null : getProjectDirForSession(providerId, PENDING);
     }
@@ -57,14 +85,31 @@ export function addWindow(win: BrowserWindow): void {
   const notify = (): void => {
     if (!win.isDestroyed()) win.webContents.send("project-context-changed");
   };
-  win.webContents.on("did-navigate", (_e, url) => {
+
+  const handleNavigate = (url: string): void => {
     sync(url);
     notify();
-  });
-  win.webContents.on("did-navigate-in-page", (_e, url) => {
-    sync(url);
-    notify();
-  });
+  };
+
+  win.webContents.on("did-navigate", (_e, url) => handleNavigate(url));
+  win.webContents.on("did-navigate-in-page", (_e, url) => handleNavigate(url));
+
+  // Some SPAs change the URL without emitting a navigation event we can rely
+  // on, so poll for changes as a safety net.
+  const poll = setInterval(() => {
+    if (win.isDestroyed()) return;
+    const url = win.webContents.getURL();
+    if (url && url !== ctx.currentUrl) {
+      ctx.currentUrl = url;
+      sync(url);
+      notify();
+    }
+  }, 800);
+  win.on("closed", () => clearInterval(poll));
+
+  // Seed the context with the initial URL.
+  ctx.currentUrl = win.webContents.getURL();
+  sync(ctx.currentUrl);
 }
 
 export function getContextByWebContents(wc: Electron.WebContents): WindowCtx | null {

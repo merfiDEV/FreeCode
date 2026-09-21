@@ -46,10 +46,16 @@ function key(providerId: string, sessionId: string): string {
   return providerId + ":" + sessionId;
 }
 
-/** Directory remembered for a provider + session, or null. */
+/**
+ * Directory remembered for a provider + session, or null.
+ *
+ * Falls back to the legacy unprefixed key (written before multi-platform
+ * support) so old conversations keep working after the upgrade.
+ */
 export function getProjectDirForSession(providerId: string, sessionId: string | null): string | null {
   if (!sessionId) return null;
-  const dir = readStore()[key(providerId, sessionId)] ?? null;
+  const store = readStore();
+  const dir = store[key(providerId, sessionId)] ?? store[sessionId] ?? null;
   if (dir && !fs.existsSync(dir)) return null;
   return dir;
 }
