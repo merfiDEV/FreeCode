@@ -1,7 +1,7 @@
 /**
- * Side overlay panel: project directory, send-delay settings, a language
- * switch, live panels for the current task and its result, and a collapse
- * button that shrinks the panel to a small floating launcher.
+ * Side overlay panel styled after Material Design 3 (dark).
+ * Shows the project directory, send-delay settings, a language switch, a
+ * collapse button, and live panels for the current task and its result.
  */
 import { sendMessage } from "./chat-input";
 import { ipc } from "./ipc";
@@ -19,19 +19,23 @@ let collapseBtn: HTMLButtonElement | null = null;
 let delayHeadingEl: HTMLElement | null = null;
 let delayToEl: HTMLElement | null = null;
 let delaySecEl: HTMLElement | null = null;
-let saveLinkEl: HTMLElement | null = null;
+let saveLinkEl: HTMLButtonElement | null = null;
 let delayStatusEl: HTMLElement | null = null;
 let taskHeadingEl: HTMLElement | null = null;
 let resultHeadingEl: HTMLElement | null = null;
 let resultStatusEl: HTMLElement | null = null;
+let resultStatusTextEl: HTMLElement | null = null;
 
 let delayMinInput: HTMLInputElement | null = null;
 let delayMaxInput: HTMLInputElement | null = null;
 
+let taskSep: HTMLElement | null = null;
 let taskBox: HTMLElement | null = null;
 let taskCodeEl: HTMLElement | null = null;
+let resultSep: HTMLElement | null = null;
 let resultBox: HTMLElement | null = null;
 let resultTextEl: HTMLElement | null = null;
+let statusIconEl: HTMLElement | null = null;
 
 let projectDirCache: string | null = null;
 let lastResult: { ok: boolean; text: string } | null = null;
@@ -42,135 +46,273 @@ const STYLE = `
   right: 16px;
   bottom: 16px;
   z-index: 2147483000;
-  width: 300px;
-  max-height: 80vh;
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  max-height: 85vh;
   overflow-y: auto;
-  font-family: ui-sans-serif, system-ui, sans-serif;
-  font-size: 12px;
+  box-sizing: border-box;
+  font-family: 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
   line-height: 1.4;
-  color: #e6e6e6;
+  color: #E6E1E5;
+  background: #1C1924;
+  border: 1px solid rgba(56, 52, 68, 0.5);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 20px;
+  -webkit-font-smoothing: antialiased;
 }
 #freecode-overlay.fc-collapsed { display: none; }
+#freecode-overlay *, #freecode-overlay *::before, #freecode-overlay *::after {
+  box-sizing: border-box;
+}
+
+#freecode-overlay .fc-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#freecode-overlay .fc-heading {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #E6E1E5;
+  margin: 0;
+}
+
+#freecode-overlay .fc-headrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#freecode-overlay .fc-lang-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#freecode-overlay .fc-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #38304D;
+  color: #E8DEF8;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid rgba(56, 52, 68, 0.6);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+#freecode-overlay .fc-chip:hover { background: #363244; }
+
+#freecode-overlay .fc-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #38304D;
+  color: #E8DEF8;
+  border: 1px solid rgba(56, 52, 68, 0.6);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s;
+}
+#freecode-overlay .fc-icon-btn:hover { background: #363244; }
+#freecode-overlay .fc-icon-btn svg { width: 14px; height: 14px; fill: currentColor; }
+
+#freecode-overlay .fc-change-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  border-radius: 12px;
+  background: #38304D;
+  color: #d6cded;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid rgba(56, 52, 68, 0.4);
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  transition: background 0.15s, transform 0.1s;
+}
+#freecode-overlay .fc-change-btn:hover { background: #363244; }
+#freecode-overlay .fc-change-btn:active { transform: scale(0.98); }
+#freecode-overlay .fc-change-btn:disabled { opacity: 0.55; cursor: default; }
+
+#freecode-overlay .fc-path {
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: #7CE38B;
+  word-break: break-all;
+  user-select: text;
+  letter-spacing: -0.01em;
+}
+
+#freecode-overlay .fc-divider {
+  border: none;
+  border-top: 1px solid rgba(56, 52, 68, 0.4);
+  margin: 0 -4px;
+  width: calc(100% + 8px);
+}
+
+#freecode-overlay .fc-delay-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#freecode-overlay .fc-delay-row input {
+  width: 64px;
+  text-align: center;
+  background: #15121c;
+  border: 1px solid rgba(56, 52, 68, 0.8);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #E6E1E5;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+#freecode-overlay .fc-delay-row input:focus {
+  border-color: #D0BCFF;
+  box-shadow: 0 0 0 1px #D0BCFF;
+}
+#freecode-overlay .fc-delay-row input::-webkit-inner-spin-button,
+#freecode-overlay .fc-delay-row input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+#freecode-overlay .fc-delay-row input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+#freecode-overlay .fc-delay-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #CAC4D0;
+}
+
+#freecode-overlay .fc-save-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+#freecode-overlay .fc-save-link {
+  font-size: 12px;
+  font-weight: 500;
+  color: #D0BCFF;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  transition: color 0.15s, background 0.15s;
+}
+#freecode-overlay .fc-save-link:hover {
+  color: #EADDFF;
+  background: rgba(208, 188, 255, 0.08);
+}
+
+#freecode-overlay .fc-code-box {
+  background: #121017;
+  border: 1px solid rgba(56, 52, 68, 0.4);
+  border-radius: 12px;
+  padding: 12px;
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #d1d5db;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 220px;
+  overflow-y: auto;
+  user-select: text;
+}
+#freecode-overlay .fc-code-box code {
+  font-family: inherit;
+  background: none;
+  padding: 0;
+  color: inherit;
+}
+
+#freecode-overlay .fc-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#freecode-overlay .fc-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: #137333;
+  color: #fff;
+  flex-shrink: 0;
+}
+#freecode-overlay .fc-status-icon.fc-err-bg { background: #b3261e; }
+#freecode-overlay .fc-status-icon svg {
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+#freecode-overlay .fc-status-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: #7CE38B;
+}
+#freecode-overlay .fc-status-text.fc-err { color: #ff7b7b; }
+
+#freecode-overlay .fc-muted { opacity: 0.6; }
+#freecode-overlay .fc-hidden { display: none !important; }
+
 #freecode-toggle {
   position: fixed;
   right: 16px;
   bottom: 16px;
   z-index: 2147483000;
   cursor: pointer;
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Roboto', 'Inter', system-ui, sans-serif;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.03em;
-  color: #cbb8ff;
-  background: rgba(30, 18, 20, 0.94);
-  border: 1px solid rgba(150, 120, 255, 0.5);
-  border-radius: 10px;
-  padding: 8px 12px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  letter-spacing: 0.05em;
+  color: #EADDFF;
+  background: #1C1924;
+  border: 1px solid rgba(208, 188, 255, 0.4);
+  border-radius: 24px;
+  padding: 10px 16px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.35);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-}
-#freecode-toggle:hover { background: rgba(120, 90, 220, 0.4); }
-#freecode-toggle.fc-hidden { display: none; }
-.fc-card {
-  background: rgba(30, 18, 20, 0.94);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  padding: 10px 12px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
-}
-.fc-heading {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.85;
-  margin-bottom: 6px;
-}
-.fc-headrow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: 8px;
 }
-.fc-headrow .fc-heading { margin-bottom: 0; }
-.fc-headrow-actions { display: flex; align-items: center; gap: 6px; }
-.fc-row { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
-.fc-value {
-  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
-  color: #7ee081;
-  word-break: break-all;
-  margin-top: 6px;
-}
-#freecode-overlay button {
-  cursor: pointer;
-  font: inherit;
-  color: #cbb8ff;
-  background: rgba(120, 90, 220, 0.25);
-  border: 1px solid rgba(150, 120, 255, 0.5);
-  border-radius: 8px;
-  padding: 6px 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-#freecode-overlay button:hover { background: rgba(120, 90, 220, 0.4); }
-#freecode-overlay button:disabled { opacity: 0.55; cursor: default; }
-.fc-icon-btn {
-  padding: 3px 8px !important;
-  font-size: 11px !important;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-.fc-delay-box {
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 8px;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-}
-.fc-delay-box input {
-  width: 56px;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 6px;
-  color: #fff;
-  font: inherit;
-  padding: 4px 6px;
-  text-align: center;
-}
-.fc-delay-save { text-align: right; margin-top: 6px; }
-.fc-link {
-  color: #b9a6ff;
-  cursor: pointer;
-  text-decoration: none;
-  font: inherit;
-}
-.fc-code {
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 8px;
-  padding: 8px;
-  margin-top: 6px;
-  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
-  font-size: 11px;
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-height: 220px;
-  overflow-y: auto;
-  color: #d8d8d8;
-}
-.fc-status { margin-top: 6px; display: flex; align-items: center; gap: 6px; }
-.fc-ok { color: #6ee07a; }
-.fc-err { color: #ff7b7b; }
-.fc-muted { opacity: 0.6; }
-.fc-hidden { display: none !important; }
+#freecode-toggle:hover { background: #23202E; }
+#freecode-toggle.fc-hidden { display: none; }
 `;
+
+const SVG_NS = "http://www.w3.org/2000/svg";
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -183,12 +325,44 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
+function svgIcon(viewBox: string, pathD: string, stroke = false): SVGSVGElement {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", viewBox);
+  svg.setAttribute("aria-hidden", "true");
+  if (stroke) {
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+  }
+  const path = document.createElementNS(SVG_NS, "path");
+  path.setAttribute("d", pathD);
+  svg.appendChild(path);
+  return svg;
+}
+
 function injectStyles(): void {
   if (document.getElementById("freecode-style")) return;
   const style = document.createElement("style");
   style.id = "freecode-style";
   style.textContent = STYLE;
   document.head.appendChild(style);
+}
+
+function injectFonts(): void {
+  if (document.getElementById("freecode-fonts")) return;
+  const pre1 = document.createElement("link");
+  pre1.rel = "preconnect";
+  pre1.href = "https://fonts.googleapis.com";
+  const pre2 = document.createElement("link");
+  pre2.rel = "preconnect";
+  pre2.href = "https://fonts.gstatic.com";
+  pre2.crossOrigin = "";
+  const link = document.createElement("link");
+  link.id = "freecode-fonts";
+  link.rel = "stylesheet";
+  link.href =
+    "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Roboto:wght@400;500;700&display=swap";
+  document.head.append(pre1, pre2, link);
 }
 
 // ===== Collapse / expand =====
@@ -200,9 +374,9 @@ function setCollapsed(value: boolean): void {
 
 // ===== Language =====
 
-/** Short badge text for the language button (shows the *target* language). */
+/** Current language shown on the chip. */
 function langBadge(): string {
-  return getLanguage() === "en" ? "RU" : "EN";
+  return getLanguage().toUpperCase();
 }
 
 /** Re-apply all translated strings to the existing DOM. */
@@ -225,15 +399,16 @@ function applyTranslations(): void {
   if (toggleBtn) toggleBtn.title = t("overlay.expandTitle");
 
   // Status line: either the last result or the empty placeholder.
-  if (resultStatusEl) {
+  if (resultStatusTextEl) {
     if (lastResult) {
-      resultStatusEl.textContent =
-        (lastResult.ok ? "✅ " : "❌ ") +
-        t(lastResult.ok ? "overlay.result.success" : "overlay.result.error");
-      resultStatusEl.className = "fc-status " + (lastResult.ok ? "fc-ok" : "fc-err");
+      resultStatusTextEl.textContent = t(
+        lastResult.ok ? "overlay.result.success" : "overlay.result.error",
+      );
+      resultStatusTextEl.className = "fc-status-text" + (lastResult.ok ? "" : " fc-err");
+      if (statusIconEl) statusIconEl.classList.toggle("fc-err-bg", !lastResult.ok);
     } else {
-      resultStatusEl.textContent = t("overlay.result.empty");
-      resultStatusEl.className = "fc-status fc-muted";
+      resultStatusTextEl.textContent = t("overlay.result.empty");
+      resultStatusTextEl.className = "fc-status-text fc-muted";
     }
   }
 }
@@ -329,21 +504,25 @@ export async function getSendDelayRange(): Promise<{ min: number; max: number }>
 export function showTask(code: string): void {
   if (!taskBox || !taskCodeEl) return;
   taskCodeEl.textContent = code;
+  taskSep?.classList.remove("fc-hidden");
   taskBox.classList.remove("fc-hidden");
   hideResult();
 }
 
 /** Show the result of the last execution. */
 export function showResult(ok: boolean, text: string): void {
-  if (!resultBox || !resultStatusEl || !resultTextEl) return;
+  if (!resultBox || !resultTextEl || !resultStatusTextEl) return;
   lastResult = { ok, text };
-  resultStatusEl.textContent = (ok ? "✅ " : "❌ ") + t(ok ? "overlay.result.success" : "overlay.result.error");
-  resultStatusEl.className = "fc-status " + (ok ? "fc-ok" : "fc-err");
+  resultStatusTextEl.textContent = t(ok ? "overlay.result.success" : "overlay.result.error");
+  resultStatusTextEl.className = "fc-status-text" + (ok ? "" : " fc-err");
+  statusIconEl?.classList.toggle("fc-err-bg", !ok);
   resultTextEl.textContent = text;
+  resultSep?.classList.remove("fc-hidden");
   resultBox.classList.remove("fc-hidden");
 }
 
 export function hideResult(): void {
+  resultSep?.classList.add("fc-hidden");
   resultBox?.classList.add("fc-hidden");
 }
 
@@ -353,14 +532,17 @@ export function hideResult(): void {
  */
 export function resetTaskPanels(): void {
   lastResult = null;
+  taskSep?.classList.add("fc-hidden");
   taskBox?.classList.add("fc-hidden");
+  resultSep?.classList.add("fc-hidden");
   resultBox?.classList.add("fc-hidden");
   if (taskCodeEl) taskCodeEl.textContent = "";
   if (resultTextEl) resultTextEl.textContent = "";
-  if (resultStatusEl) {
-    resultStatusEl.textContent = t("overlay.result.empty");
-    resultStatusEl.className = "fc-status fc-muted";
+  if (resultStatusTextEl) {
+    resultStatusTextEl.textContent = t("overlay.result.empty");
+    resultStatusTextEl.className = "fc-status-text fc-muted";
   }
+  statusIconEl?.classList.remove("fc-err-bg");
 }
 
 // ===== Mount =====
@@ -369,44 +551,51 @@ export function resetTaskPanels(): void {
 export function injectOverlay(): void {
   if (panel) return;
   injectStyles();
+  injectFonts();
 
   const root = el("div");
   root.id = "freecode-overlay";
 
-  // --- Project card (heading row carries the language + collapse buttons) ---
-  const projectCard = el("div", "fc-card");
-  const projectHeadRow = el("div", "fc-headrow");
-  projectHeadingEl = el("div", "fc-heading", t("overlay.project.heading"));
+  // --- Directory section ---
+  const dirSection = el("section", "fc-section");
 
-  const headActions = el("div", "fc-headrow-actions");
-  langBtn = el("button", "fc-icon-btn", langBadge());
+  const dirHeadRow = el("div", "fc-headrow");
+  projectHeadingEl = el("h2", "fc-heading", t("overlay.project.heading"));
+
+  const langGroup = el("div", "fc-lang-group");
+  langBtn = el("button", "fc-chip", langBadge());
+  langBtn.type = "button";
   langBtn.title = t("overlay.lang.switch");
   langBtn.addEventListener("click", () => void handleToggleLanguage());
 
-  collapseBtn = el("button", "fc-icon-btn", "▾");
+  collapseBtn = el("button", "fc-icon-btn");
+  collapseBtn.type = "button";
   collapseBtn.title = t("overlay.collapse");
+  collapseBtn.setAttribute("aria-label", t("overlay.collapse"));
+  collapseBtn.appendChild(svgIcon("0 0 24 24", "M7 10l5 5 5-5z"));
   collapseBtn.addEventListener("click", () => setCollapsed(true));
 
-  headActions.append(langBtn, collapseBtn);
-  projectHeadRow.append(projectHeadingEl, headActions);
-  projectCard.appendChild(projectHeadRow);
+  langGroup.append(langBtn, collapseBtn);
+  dirHeadRow.append(projectHeadingEl, langGroup);
+  dirSection.appendChild(dirHeadRow);
 
-  const projectRow = el("div", "fc-row");
-  changeBtn = el("button");
+  const changeRow = el("div");
+  changeBtn = el("button", "fc-change-btn");
+  changeBtn.type = "button";
   changeBtn.textContent = t("overlay.project.change");
   changeBtn.addEventListener("click", () => void handleChangeProject());
-  projectRow.appendChild(changeBtn);
-  projectCard.appendChild(projectRow);
+  changeRow.appendChild(changeBtn);
+  dirSection.appendChild(changeRow);
 
-  projectDirEl = el("div", "fc-value", t("overlay.project.none"));
-  projectCard.appendChild(projectDirEl);
+  projectDirEl = el("div", "fc-path", t("overlay.project.none"));
+  dirSection.appendChild(projectDirEl);
 
-  // --- Send delay card ---
-  const delayCard = el("div", "fc-card");
-  delayHeadingEl = el("div", "fc-heading", t("overlay.delay.heading"));
-  delayCard.appendChild(delayHeadingEl);
+  // --- Send delay section ---
+  const delaySection = el("section", "fc-section");
+  delayHeadingEl = el("h2", "fc-heading", t("overlay.delay.heading"));
+  delaySection.appendChild(delayHeadingEl);
 
-  const delayBox = el("div", "fc-delay-box");
+  const delayRow = el("div", "fc-delay-row");
   delayMinInput = el("input");
   delayMinInput.type = "number";
   delayMinInput.min = "0";
@@ -415,35 +604,57 @@ export function injectOverlay(): void {
   delayMaxInput.type = "number";
   delayMaxInput.min = "0";
   delayMaxInput.step = "0.1";
-  delayToEl = el("span", "fc-muted", t("overlay.delay.to"));
-  delaySecEl = el("span", "fc-muted", t("overlay.delay.sec"));
-  delayBox.append(delayMinInput, delayToEl, delayMaxInput, delaySecEl);
-  delayCard.appendChild(delayBox);
+  delayToEl = el("span", "fc-delay-label", t("overlay.delay.to"));
+  delaySecEl = el("span", "fc-delay-label", t("overlay.delay.sec"));
+  delayRow.append(delayMinInput, delayToEl, delayMaxInput, delaySecEl);
+  delaySection.appendChild(delayRow);
 
-  const saveRow = el("div", "fc-delay-save");
-  saveLinkEl = el("a", "fc-link", t("overlay.delay.save"));
-  saveLinkEl.addEventListener("click", (e) => {
-    e.preventDefault();
-    void saveDelay();
-  });
+  const saveRow = el("div", "fc-save-row");
+  saveLinkEl = el("button", "fc-save-link");
+  saveLinkEl.type = "button";
+  saveLinkEl.textContent = t("overlay.delay.save");
+  saveLinkEl.addEventListener("click", () => void saveDelay());
   delayStatusEl = el("span", "fc-muted fc-hidden", t("overlay.delay.saved"));
-  saveRow.append(saveLinkEl, document.createTextNode(" "), delayStatusEl);
-  delayCard.appendChild(saveRow);
+  saveRow.append(saveLinkEl, delayStatusEl);
+  delaySection.appendChild(saveRow);
 
-  // --- Task card ---
-  taskBox = el("div", "fc-card fc-hidden");
-  taskHeadingEl = el("div", "fc-heading", t("overlay.task.heading"));
-  taskCodeEl = el("div", "fc-code");
-  taskBox.append(taskHeadingEl, taskCodeEl);
+  // --- Task block ---
+  taskSep = el("hr", "fc-divider fc-hidden");
+  taskBox = el("section", "fc-section fc-hidden");
+  taskHeadingEl = el("h2", "fc-heading", t("overlay.task.heading"));
+  const taskCodeBox = el("div", "fc-code-box");
+  taskCodeEl = el("code");
+  taskCodeBox.appendChild(taskCodeEl);
+  taskBox.append(taskHeadingEl, taskCodeBox);
 
-  // --- Result card ---
-  resultBox = el("div", "fc-card fc-hidden");
-  resultHeadingEl = el("div", "fc-heading", t("overlay.result.heading"));
-  resultStatusEl = el("div", "fc-status fc-muted", t("overlay.result.empty"));
-  resultTextEl = el("div", "fc-code");
-  resultBox.append(resultHeadingEl, resultStatusEl, resultTextEl);
+  // --- Result block ---
+  resultSep = el("hr", "fc-divider fc-hidden");
+  resultBox = el("section", "fc-section fc-hidden");
+  resultHeadingEl = el("h2", "fc-heading", t("overlay.result.heading"));
 
-  root.append(projectCard, delayCard, taskBox, resultBox);
+  const statusRow = el("div", "fc-status-row");
+  statusIconEl = el("span", "fc-status-icon");
+  statusIconEl.appendChild(svgIcon("0 0 24 24", "M5 13l4 4L19 7", true));
+  resultStatusTextEl = el("span", "fc-status-text fc-muted", t("overlay.result.empty"));
+  statusRow.append(statusIconEl, resultStatusTextEl);
+  resultBox.appendChild(statusRow);
+
+  const resultCodeBox = el("div", "fc-code-box", "(no output)");
+  resultTextEl = resultCodeBox;
+  resultBox.appendChild(resultCodeBox);
+
+  // Divider after the directory, before the delay section.
+  const delaySep = el("hr", "fc-divider");
+
+  root.append(
+    dirSection,
+    delaySep,
+    delaySection,
+    taskSep,
+    taskBox,
+    resultSep,
+    resultBox,
+  );
   document.body.appendChild(root);
   panel = root;
 
