@@ -3,10 +3,6 @@ name: "CI: Bump, Build & Release"
 on:
   push:
     branches: [main]
-    # Skip runs whose only change is the automated version bump.
-    paths-ignore:
-      - 'package.json'
-      - 'package-lock.json'
 
 # Serialise runs, but never cancel an in-progress build: the bump commit
 # itself triggers a follow-up run, and cancelling the running one would kill
