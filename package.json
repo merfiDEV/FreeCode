@@ -8,6 +8,7 @@
     "watch": "tsc -w",
     "start": "npm run build && electron .",
     "clean": "rimraf dist release",
+    "icons": "node scripts/make-icon.js",
     "build:win": "npm run build && electron-builder --win --publish always",
     "build:win:local": "npm run build && electron-builder --win --publish never",
     "build:win:portable": "npm run build && electron-builder --win --config.win.target=portable --publish always",
@@ -45,7 +46,9 @@
     "@types/node": "^22.7.0",
     "electron": "^33.0.0",
     "electron-builder": "^24.13.3",
+    "png-to-ico": "^3.0.2",
     "rimraf": "^6.0.1",
+    "sharp": "^0.35.4",
     "typescript": "^5.6.2"
   },
   "build": {
