@@ -96,14 +96,18 @@ export const qwenProvider: Provider = {
 
   // ---- Streaming state ----
   /**
-   * Qwen keeps the send button in the DOM and disables it while the answer
-   * streams, re-enabling it once the reply is finished.
+   * While the answer streams, Qwen swaps the send button for a stop button
+   * (`button.stop-button`, aria-label "Stop") and removes .send-button from
+   * the DOM entirely. Once the reply is finished the stop button disappears
+   * and the send button returns (still disabled while the input is empty).
+   *
+   * So the reliable signal is the stop button, not the send button's state.
    */
   isResponseComplete(): boolean {
     try {
-      const btn = document.querySelector("button.send-button") as HTMLButtonElement | null;
-      if (!btn) return false;
-      return !isDisabled(btn);
+      if (document.querySelector("button.stop-button")) return false;
+      // Guard against an empty chat: no assistant message means nothing to read.
+      return !!document.querySelector(ASSISTANT_SELECTOR);
     } catch {
       return false;
     }
@@ -111,9 +115,7 @@ export const qwenProvider: Provider = {
 
   isGenerating(): boolean {
     try {
-      const btn = document.querySelector("button.send-button") as HTMLButtonElement | null;
-      if (!btn) return false;
-      return isDisabled(btn);
+      return !!document.querySelector("button.stop-button");
     } catch {
       return false;
     }

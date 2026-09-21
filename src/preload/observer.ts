@@ -18,15 +18,15 @@ const HANDLED = new WeakSet<HTMLElement>();
 let executing = false;
 let started = false;
 
-async function handleReply(el: HTMLElement): Promise<void> {
-  if (executing) return;
-  if (HANDLED.has(el)) return;
+async function handleReply(el: HTMLElement): Promise<boolean> {
+  if (executing) return false;
+  if (HANDLED.has(el)) return false;
 
   const provider = getProviderByUrl(location.href);
-  if (!provider) return;
+  if (!provider) return false;
 
   const blocks = provider.getToolBlocks(el, TOOL_BLOCK_LANG);
-  if (blocks.length === 0) return;
+  if (blocks.length === 0) return false;
 
   HANDLED.add(el);
   executing = true;
@@ -55,13 +55,14 @@ async function handleReply(el: HTMLElement): Promise<void> {
   setTimeout(() => {
     executing = false;
   }, 1500);
+  return true;
 }
 
 /** How many consecutive "complete" scans are required before we act. */
 const STABLE_SCANS = 3;
 let stableCount = 0;
 
-/** Scan the DOM once for a finished, not-yet-handled reply. */
+/** Scan the DOM once for finished, not-yet-handled replies. */
 async function scan(): Promise<void> {
   const provider = getProviderByUrl(location.href);
   if (!provider) return;
@@ -71,15 +72,24 @@ async function scan(): Promise<void> {
     return;
   }
   stableCount++;
-
-  const candidates = provider.getMessageCandidates();
-  if (candidates.length === 0) return;
-  const last = candidates[candidates.length - 1];
-  if (HANDLED.has(last)) return;
   if (stableCount < STABLE_SCANS) return;
   stableCount = 0;
 
-  await handleReply(last);
+  const candidates = provider.getMessageCandidates();
+  if (candidates.length === 0) return;
+
+  // Walk every assistant message, not just the last one: some sites (Qwen)
+  // append a fresh empty container for the next request while the tool block
+  // stays in an earlier message. HANDLED prevents re-running old blocks.
+  let scanned = 0;
+  for (const message of candidates) {
+    if (HANDLED.has(message)) continue;
+    const handled = await handleReply(message);
+    if (handled) scanned++;
+  }
+  if (scanned > 0) {
+    console.log("[freecode] scan: handled", scanned, "message(s)");
+  }
 }
 
 /** Begin watching the page. Idempotent — safe to call multiple times. */
