@@ -1,19 +1,19 @@
-import { app } from "electron";
-import { createMainWindow } from "./window";
+import { app, BrowserWindow } from "electron";
+import { createHubWindow } from "./hub-window";
 import { registerIpcHandlers } from "./ipc";
-import { dataRoot, hasLoginMarker } from "./paths";
+import { dataRoot } from "./paths";
 import { applyUserAgentMask } from "./user-agent";
-import { ZAI, APP } from "../shared/constants";
+import { APP } from "../shared/constants";
 
 // Store the whole browser session (cookies, localStorage, cache) in a
-// user-visible folder so the z.ai login survives restarts and upgrades.
+// user-visible folder so logins survive restarts and upgrades.
 // Must run before the first BrowserWindow is created.
 app.setPath("userData", dataRoot());
 app.setAppUserModelId(APP.name);
 
-// Present ourselves as a regular Chrome browser.
+// Present ourselves as a regular Chrome browser (provider windows load the
+// real chat sites, so the mask matters there; the hub is local).
 applyUserAgentMask(app);
-// Hide the most common automation flag so sites do not degrade the UI.
 app.commandLine.appendSwitch("disable-blink-features", "AutomationControlled");
 
 // The agent loop relies on an unthrottled, always-alive renderer.
@@ -27,7 +27,6 @@ if (!gotLock) {
   app.quit();
 } else {
   app.on("second-instance", () => {
-    const { BrowserWindow } = require("electron") as typeof import("electron");
     const win = BrowserWindow.getAllWindows()[0];
     if (win) {
       if (win.isMinimized()) win.restore();
@@ -39,15 +38,12 @@ if (!gotLock) {
 app.whenReady().then(() => {
   if (!gotLock) return;
   registerIpcHandlers();
-  // First run (no stored login) goes straight to the auth page.
-  const startUrl = hasLoginMarker() ? ZAI.homeUrl : ZAI.authUrl;
-  console.log("[freecode] start URL:", startUrl);
-  createMainWindow(startUrl);
+  console.log("[freecode] opening hub");
+  // The hub is the start screen; the user picks a platform from there.
+  createHubWindow();
 
   app.on("activate", () => {
-    if (require("electron").BrowserWindow.getAllWindows().length === 0) {
-      createMainWindow(hasLoginMarker() ? ZAI.homeUrl : ZAI.authUrl);
-    }
+    if (BrowserWindow.getAllWindows().length === 0) createHubWindow();
   });
 });
 

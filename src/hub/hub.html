@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>freecode — Hub</title>
+<style>
+:root {
+  --fc-canvas: #0e2018;
+  --fc-surface-window: #0e1a14;
+  --fc-card-bg: #12291f;
+  --fc-card-hover: #163026;
+  --fc-card-active: #0f241c;
+  --fc-border: #234a3b;
+  --fc-border-bright: #2f5c49;
+  --fc-border-dashed: #2f5c49;
+  --fc-mint-primary: #7fe3b3;
+  --fc-mint-bright: #98f4cc;
+  --fc-mint-muted: #82cbab;
+  --fc-emerald-btn: #1c4a38;
+  --fc-emerald-btn-hover: #1f5c44;
+  --fc-text-headings: #d7f5e7;
+  --fc-text-body: #cfe9dc;
+  --fc-text-secondary: #8dbfa9;
+  --fc-text-caption: #6a9a86;
+  --fc-status-success-bg: #106b47;
+  --fc-status-success-text: #7fe3b3;
+  --fc-status-warning-bg: rgba(201, 162, 39, 0.18);
+  --fc-status-warning-text: #e6be44;
+  --fc-radius-card: 20px;
+  --fc-radius-btn: 12px;
+  --fc-radius-pill: 999px;
+  --fc-radius-icon: 16px;
+  --fc-shadow-window: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px #234a3b;
+  --fc-shadow-card: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  --fc-shadow-card-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 0 16px -2px rgba(127, 227, 179, 0.25);
+  --fc-shadow-modal: 0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px #2f5c49;
+  --fc-font-sans: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --fc-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+html.light {
+  --fc-canvas: #edf8f3;
+  --fc-surface-window: #f7fcf9;
+  --fc-card-bg: #ffffff;
+  --fc-card-hover: #f0f7f3;
+  --fc-card-active: #e6f2eb;
+  --fc-border: #d2e8dd;
+  --fc-border-bright: #b3dac7;
+  --fc-border-dashed: #a4ceba;
+  --fc-mint-primary: #0f6844;
+  --fc-mint-bright: #0a4f33;
+  --fc-mint-muted: #2f7e5d;
+  --fc-emerald-btn: #0f6844;
+  --fc-emerald-btn-hover: #147c52;
+  --fc-text-headings: #0b2e21;
+  --fc-text-body: #164232;
+  --fc-text-secondary: #3b6b57;
+  --fc-text-caption: #5a8a75;
+  --fc-status-success-bg: #d1fae5;
+  --fc-status-success-text: #065f46;
+  --fc-shadow-window: 0 25px 50px -12px rgba(15, 104, 68, 0.15), 0 0 0 1px #d2e8dd;
+  --fc-shadow-card: 0 10px 20px -5px rgba(15, 104, 68, 0.08);
+  --fc-shadow-card-hover: 0 14px 24px -4px rgba(15, 104, 68, 0.16), 0 0 12px 0 rgba(15, 104, 68, 0.15);
+  --fc-shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px #b3dac7;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+body {
+  background-color: var(--fc-canvas);
+  color: var(--fc-text-body);
+  font-family: var(--fc-font-sans);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  line-height: 1.45;
+  overflow: hidden;
+}
+.app-window {
+  flex: 1;
+  min-height: 0;
+  background-color: var(--fc-surface-window);
+  border-radius: 18px;
+  border: 1px solid var(--fc-border);
+  box-shadow: var(--fc-shadow-window);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+.window-watermark {
+  position: absolute;
+  right: -20px;
+  bottom: -30px;
+  font-family: var(--fc-font-mono);
+  font-size: 260px;
+  font-weight: 700;
+  color: var(--fc-mint-primary);
+  opacity: 0.025;
+  pointer-events: none;
+  line-height: 1;
+  letter-spacing: -15px;
+  z-index: 0;
+}
+.window-header {
+  position: relative;
+  z-index: 2;
+  padding: 22px 32px 18px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--fc-border);
+  background: var(--fc-surface-window);
+}
+.brand-cluster { display: flex; align-items: center; gap: 16px; }
+.app-icon-squircle {
+  width: 56px; height: 56px; flex-shrink: 0; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+.app-icon-squircle:hover { transform: scale(1.04); }
+.app-icon-squircle svg { width: 100%; height: 100%; display: block; border-radius: 16px; }
+.brand-titles { display: flex; flex-direction: column; gap: 2px; }
+.brand-title-row { display: flex; align-items: baseline; gap: 8px; }
+.brand-name { font-size: 26px; font-weight: 700; color: var(--fc-text-headings); letter-spacing: -0.4px; line-height: 1.15; }
+.brand-badge {
+  font-family: var(--fc-font-mono); font-size: 11px; font-weight: 500;
+  color: var(--fc-mint-primary);
+  background: rgba(127, 227, 179, 0.12);
+  border: 1px solid rgba(127, 227, 179, 0.25);
+  padding: 1px 7px; border-radius: var(--fc-radius-pill);
+}
+.brand-subtitle { font-size: 13.5px; color: var(--fc-text-secondary); }
+.header-actions { display: flex; align-items: center; gap: 12px; }
+.lang-switcher {
+  display: inline-flex; background: var(--fc-card-bg);
+  border: 1px solid var(--fc-border); border-radius: var(--fc-radius-pill);
+  padding: 3px;
+}
+.lang-btn {
+  background: transparent; border: none; outline: none;
+  padding: 4px 12px; font-size: 12px; font-weight: 600;
+  font-family: var(--fc-font-sans); color: var(--fc-text-caption);
+  cursor: pointer; border-radius: var(--fc-radius-pill);
+  transition: background 0.15s ease, color 0.15s ease;
+  min-width: 38px; text-align: center;
+}
+.lang-btn.active { background: var(--fc-mint-primary); color: #0b261b; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+.icon-action-btn {
+  width: 36px; height: 36px; border-radius: var(--fc-radius-pill);
+  background: var(--fc-card-bg); border: 1px solid var(--fc-border);
+  color: var(--fc-text-secondary);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+}
+.icon-action-btn:hover { border-color: var(--fc-border-bright); color: var(--fc-mint-primary); background: var(--fc-card-hover); transform: translateY(-1px); }
+.icon-action-btn:active { transform: scale(0.95); }
+.icon-action-btn svg { width: 19px; height: 19px; stroke: currentColor; stroke-width: 1.75; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.window-body {
+  flex: 1; padding: 24px 32px; overflow-y: auto;
+  position: relative; z-index: 1;
+  scrollbar-width: thin; scrollbar-color: var(--fc-border-bright) transparent;
+}
+.window-body::-webkit-scrollbar { width: 6px; }
+.window-body::-webkit-scrollbar-thumb { background: var(--fc-border-bright); border-radius: 3px; }
+.body-top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.section-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 600; color: var(--fc-text-caption); }
+.section-counter { font-family: var(--fc-font-mono); font-size: 12px; color: var(--fc-mint-muted); }
+.cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+@media (max-width: 820px) { .cards-grid { grid-template-columns: 1fr; } }
+.platform-card {
+  background-color: var(--fc-card-bg);
+  border: 1px solid var(--fc-border);
+  border-radius: var(--fc-radius-card);
+  padding: 20px 22px;
+  box-shadow: var(--fc-shadow-card);
+  display: flex; flex-direction: column; justify-content: space-between;
+  min-height: 232px; position: relative;
+  transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+  animation: cardCascade 0.25s cubic-bezier(0.2, 0, 0, 1) backwards;
+}
+.platform-card:nth-child(1) { animation-delay: 0.04s; }
+.platform-card:nth-child(2) { animation-delay: 0.08s; }
+.platform-card:nth-child(3) { animation-delay: 0.12s; }
+.platform-card:nth-child(4) { animation-delay: 0.16s; }
+@keyframes cardCascade { 0% { opacity: 0; transform: translateY(14px); } 100% { opacity: 1; transform: translateY(0); } }
+.platform-card:hover { background-color: var(--fc-card-hover); border-color: var(--fc-border-bright); transform: translateY(-2px); box-shadow: var(--fc-shadow-card-hover); }
+.platform-card:active { transform: scale(0.985); background-color: var(--fc-card-active); }
+.card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.platform-logo-badge {
+  width: 44px; height: 44px; border-radius: var(--fc-radius-icon);
+  display: flex; align-items: center; justify-content: center;
+  background: var(--fc-card-bg);
+  border: 1px solid var(--fc-border);
+  flex-shrink: 0; overflow: hidden;
+}
+.platform-logo-badge img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+.platform-logo-badge svg { width: 24px; height: 24px; }
+.status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 11px; border-radius: var(--fc-radius-pill);
+  font-size: 12px; font-weight: 500; letter-spacing: 0.2px; white-space: nowrap;
+}
+.status-dot { width: 7px; height: 7px; border-radius: 50%; }
+.status-pill.status-logged-in { background-color: var(--fc-status-success-bg); color: var(--fc-status-success-text); border: 1px solid rgba(127, 227, 179, 0.35); }
+.status-pill.status-logged-in .status-dot { background-color: var(--fc-mint-bright); box-shadow: 0 0 6px var(--fc-mint-bright); }
+.status-pill.status-logged-out { background: transparent; color: var(--fc-text-caption); border: 1px solid var(--fc-border); }
+.status-pill.status-logged-out .status-dot { border: 1.5px solid var(--fc-text-caption); background: transparent; }
+.card-identity { margin-bottom: 14px; }
+.platform-name { font-size: 19px; font-weight: 700; color: var(--fc-text-headings); line-height: 1.25; margin-bottom: 2px; }
+.platform-domain { font-family: var(--fc-font-mono); font-size: 12px; color: var(--fc-text-secondary); letter-spacing: 0.1px; }
+.card-meta-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; padding-top: 10px; border-top: 1px dashed var(--fc-border); }
+.meta-row { display: flex; align-items: center; font-size: 12.5px; line-height: 1.35; gap: 6px; overflow: hidden; white-space: nowrap; }
+.meta-label { color: var(--fc-text-caption); flex-shrink: 0; }
+.meta-value-path { font-family: var(--fc-font-mono); font-size: 12px; color: var(--fc-mint-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; cursor: help; }
+.meta-value-path.empty { font-family: var(--fc-font-sans); color: var(--fc-text-caption); font-style: italic; }
+.meta-value-time { font-size: 12px; color: var(--fc-text-secondary); }
+.card-action-btn {
+  width: 100%; height: 40px; border-radius: var(--fc-radius-btn);
+  border: 1px solid transparent;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--fc-font-sans); font-size: 13.5px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+}
+.card-action-btn.btn-open { background-color: var(--fc-emerald-btn); color: #e5fbf2; border-color: var(--fc-mint-primary); box-shadow: 0 4px 12px rgba(16, 107, 71, 0.35); }
+.card-action-btn.btn-open:hover { background-color: var(--fc-emerald-btn-hover); border-color: var(--fc-mint-bright); color: #ffffff; box-shadow: 0 6px 16px rgba(127, 227, 179, 0.3); }
+.card-action-btn.btn-open:active { transform: scale(0.98); }
+.card-action-btn.btn-login { background-color: transparent; border-color: var(--fc-border-bright); color: var(--fc-text-headings); }
+.card-action-btn.btn-login:hover { background-color: rgba(127, 227, 179, 0.08); border-color: var(--fc-mint-primary); color: var(--fc-mint-bright); }
+.card-action-btn.btn-login:active { transform: scale(0.98); }
+.card-action-btn svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.15s ease; }
+.card-action-btn:hover svg { transform: translateX(2px); }
+.window-footer {
+  position: relative; z-index: 2;
+  padding: 14px 32px; background: var(--fc-surface-window);
+  border-top: 1px solid var(--fc-border);
+  display: flex; align-items: center; justify-content: space-between; font-size: 12px;
+}
+.footer-left { display: flex; align-items: center; gap: 10px; color: var(--fc-text-caption); font-family: var(--fc-font-mono); }
+.footer-dot { color: var(--fc-border-bright); }
+.footer-folder-link { color: var(--fc-text-secondary); text-decoration: none; cursor: pointer; }
+.footer-folder-link:hover { color: var(--fc-mint-primary); text-decoration: underline; }
+.footer-right-link {
+  background: none; border: none; color: var(--fc-mint-muted);
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  padding: 4px 8px; border-radius: 6px;
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: inherit; transition: all 0.15s;
+}
+.footer-right-link:hover { color: var(--fc-mint-bright); background: rgba(127, 227, 179, 0.08); }
+.modal-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(4, 15, 10, 0.78); backdrop-filter: blur(4px);
+  z-index: 50; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+.modal-backdrop.open { opacity: 1; pointer-events: auto; }
+.modal-box {
+  width: 480px; background: var(--fc-surface-window);
+  border: 1px solid var(--fc-border-bright); border-radius: 20px;
+  padding: 24px; box-shadow: var(--fc-shadow-modal);
+  transform: scale(0.95) translateY(8px);
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+.modal-backdrop.open .modal-box { transform: scale(1) translateY(0); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--fc-border); }
+.modal-title { font-size: 18px; font-weight: 700; color: var(--fc-text-headings); display: flex; align-items: center; gap: 8px; }
+.modal-close-btn { background: transparent; border: none; color: var(--fc-text-caption); cursor: pointer; padding: 4px; display: flex; border-radius: 6px; }
+.modal-close-btn:hover { color: var(--fc-text-headings); background: var(--fc-card-hover); }
+.modal-field { margin-bottom: 16px; }
+.modal-label { display: block; font-size: 12.5px; font-weight: 500; color: var(--fc-text-secondary); margin-bottom: 6px; }
+.modal-input-group { display: flex; align-items: center; gap: 8px; }
+.modal-input {
+  flex: 1; height: 38px; background: var(--fc-card-bg);
+  border: 1px solid var(--fc-border); border-radius: 10px;
+  padding: 0 12px; color: var(--fc-text-body);
+  font-family: var(--fc-font-mono); font-size: 12px; outline: none;
+}
+.modal-input:focus { border-color: var(--fc-mint-primary); }
+.modal-btn-action {
+  height: 38px; padding: 0 14px; background: var(--fc-card-hover);
+  border: 1px solid var(--fc-border); border-radius: 10px;
+  color: var(--fc-text-body); font-size: 12px; cursor: pointer;
+  font-weight: 500; display: inline-flex; align-items: center; gap: 6px;
+}
+.modal-btn-action:hover { border-color: var(--fc-mint-primary); color: var(--fc-mint-primary); }
+.toast-msg {
+  position: absolute; bottom: 60px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #051a10; border: 1px solid var(--fc-mint-primary);
+  color: var(--fc-mint-bright); padding: 8px 18px;
+  border-radius: var(--fc-radius-pill); font-size: 12px; font-weight: 500;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+  opacity: 0; pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
+  z-index: 60; display: flex; align-items: center; gap: 6px;
+}
+.toast-msg.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="app-window" id="appWindow">
+  <div class="window-watermark">{⚡}</div>
+
+  <header class="window-header">
+    <div class="brand-cluster">
+      <div class="app-icon-squircle">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="56" height="56">
+          <defs>
+            <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#143628"/>
+              <stop offset="100%" stop-color="#0c2017"/>
+            </linearGradient>
+            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="1" stdDeviation="3" flood-color="#7fe3b3" flood-opacity="0.35"/>
+            </filter>
+          </defs>
+          <rect x="8" y="8" width="112" height="112" rx="32" ry="32" fill="url(#bg)" stroke="#2f5c49" stroke-width="2"/>
+          <rect x="10" y="10" width="108" height="108" rx="30" ry="30" fill="none" stroke="#7fe3b3" stroke-opacity="0.18" stroke-width="1.5"/>
+          <path d="M42 38 C42 46, 36 49, 36 56 C36 61, 31 64, 27 64 C31 64, 36 67, 36 72 C36 79, 42 82, 42 90" fill="none" stroke="#7fe3b3" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M86 38 C86 46, 92 49, 92 56 C92 61, 97 64, 101 64 C97 64, 92 67, 92 72 C92 79, 86 82, 86 90" fill="none" stroke="#7fe3b3" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <polygon points="67,32 50,65 63,65 59,96 78,61 65,61" fill="#ffffff" filter="url(#glow)"/>
+        </svg>
+      </div>
+      <div class="brand-titles">
+        <div class="brand-title-row">
+          <span class="brand-name">freecode</span>
+          <span class="brand-badge" data-i18n="badge">desktop hub</span>
+        </div>
+        <span class="brand-subtitle" data-i18n="subtitle">Выберите платформу для работы</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div class="lang-switcher">
+        <button class="lang-btn active" id="btnLangRU" data-lang="ru">RU</button>
+        <button class="lang-btn" id="btnLangEN" data-lang="en">EN</button>
+      </div>
+      <button class="icon-action-btn" data-i18n-title="settings" id="btnSettings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="window-body">
+    <div class="body-top-bar">
+      <span class="section-title" data-i18n="sec_title">Подключённые платформы</span>
+      <span class="section-counter" id="secCount">—</span>
+    </div>
+    <div class="cards-grid" id="cards"></div>
+  </main>
+
+  <footer class="window-footer">
+    <div class="footer-left">
+      <span id="txtVersion">v0.0.0</span>
+      <span class="footer-dot">·</span>
+      <span data-i18n="data_in">данные в</span>
+      <a class="footer-folder-link" id="lnkDataRoot">~/freecode</a>
+    </div>
+    <button class="footer-right-link" id="btnUpdates">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+      <span data-i18n="check_updates">Проверить обновления</span>
+    </button>
+  </footer>
+
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title" data-i18n="modal_settings_title">Настройки freecode</div>
+        <button class="modal-close-btn" id="btnCloseSettings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="modal-field">
+        <label class="modal-label" data-i18n="modal_lang_label">Язык интерфейса</label>
+        <div class="lang-switcher" style="width:100%; display:flex;">
+          <button class="lang-btn" style="flex:1" id="mBtnLangRU" data-lang="ru">Русский (RU)</button>
+          <button class="lang-btn" style="flex:1" id="mBtnLangEN" data-lang="en">English (EN)</button>
+        </div>
+      </div>
+
+      <div class="modal-field">
+        <label class="modal-label" data-i18n="modal_delay_label">Задержка отправки команд в чат</label>
+        <div class="modal-input-group">
+          <input type="number" class="modal-input" id="inpDelayMin" min="0" step="0.1" style="max-width:90px;">
+          <span style="color:var(--fc-text-secondary); font-size:12px;" data-i18n="delay_to">до</span>
+          <input type="number" class="modal-input" id="inpDelayMax" min="0" step="0.1" style="max-width:90px;">
+          <span style="color:var(--fc-text-secondary); font-size:12px;" data-i18n="delay_sec">сек</span>
+          <button class="modal-btn-action" id="btnSaveDelay" data-i18n="modal_save_btn">Сохранить</button>
+        </div>
+      </div>
+
+      <div class="modal-field">
+        <label class="modal-label" data-i18n="modal_path_label">Путь к папке данных и проектов</label>
+        <div class="modal-input-group">
+          <input type="text" class="modal-input" id="inpDataRoot" readonly>
+          <button class="modal-btn-action" id="btnOpenFolder">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            <span data-i18n="modal_open_folder">Открыть папку</span>
+          </button>
+        </div>
+      </div>
+
+      <div style="margin-top:20px; display:flex; justify-content:flex-end;">
+        <button class="card-action-btn btn-open" style="width:auto; padding:0 24px; height:36px;" id="btnDoneSettings" data-i18n="modal_save_btn">Готово</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-msg" id="toast">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span id="toastText"></span>
+  </div>
+</div>
+
+<script src="hub.js"></script>
+</body>
+</html>
