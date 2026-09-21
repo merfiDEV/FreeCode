@@ -1,6 +1,6 @@
 import { getProviderByUrl } from "../providers";
 
-/** Low-level helpers for putting text into the z.ai composer and sending it. */
+/** Low-level helpers for putting text into the composer and sending it. */
 
 let sendDelayMin = 2000;
 let sendDelayMax = 5900;
@@ -31,7 +31,7 @@ function setNativeValue(el: HTMLTextAreaElement | HTMLInputElement, value: strin
 /** Fill the composer with text (does not send). */
 export function fillInput(text: string): boolean {
   const provider = currentProvider();
-  const input = provider?.findInput() ?? (document.querySelector("#chat-input") as HTMLElement | null);
+  const input = provider?.findInput() ?? null;
   if (!input) {
     console.warn("[freecode] chat input not found");
     return false;
@@ -47,20 +47,30 @@ export function fillInput(text: string): boolean {
   return true;
 }
 
-/** Click the send button if present; otherwise fall back to Enter. */
+/**
+ * Submit the composer.
+ *
+ * A real <button> is clicked directly. Some sites (DeepSeek) render the send
+ * control as a <div role="button">, where .click() is unreliable — there we
+ * press Enter on the input instead.
+ */
 export function pressSend(): boolean {
   const provider = currentProvider();
-  const btn =
-    provider?.findSendButton() ??
-    (document.querySelector("#send-message-button, button.sendMessageButton") as HTMLButtonElement | null);
-  if (btn && !(btn as HTMLButtonElement).disabled) {
+  const btn = provider?.findSendButton();
+  if (btn instanceof HTMLButtonElement && !btn.disabled) {
     btn.click();
     return true;
   }
   const input = provider?.findInput();
   if (input) {
-    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
-    input.dispatchEvent(new KeyboardEvent("keyup", { key: "Enter", bubbles: true }));
+    input.focus();
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }));
+    input.dispatchEvent(new KeyboardEvent("keyup", { key: "Enter", bubbles: true, cancelable: true }));
+    return true;
+  }
+  // Last resort: click whatever control the provider found, even if it is a DIV.
+  if (btn) {
+    btn.click();
     return true;
   }
   return false;

@@ -1,9 +1,10 @@
 import { BrowserWindow, shell } from "electron";
 import * as path from "path";
 import { addWindow } from "./window-context";
-import { ZAI, APP } from "../shared/constants";
+import type { Provider } from "../shared/types";
+import { APP } from "../shared/constants";
 
-export function createMainWindow(startUrl: string = ZAI.homeUrl): BrowserWindow {
+export function createMainWindow(provider: Provider, startUrl?: string): BrowserWindow {
   const win = new BrowserWindow({
     width: 1280,
     height: 860,
@@ -17,9 +18,9 @@ export function createMainWindow(startUrl: string = ZAI.homeUrl): BrowserWindow 
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
-      // Named persistent partition → cookies/localStorage are written under
-      // <userData>/Partitions/zai and survive restarts (login persists).
-      partition: "persist:zai",
+      // One persistent partition per provider → each site keeps its own
+      // cookies/localStorage and never mixes sessions with another provider.
+      partition: provider.partition,
     },
   });
 
@@ -32,6 +33,6 @@ export function createMainWindow(startUrl: string = ZAI.homeUrl): BrowserWindow 
     return { action: "deny" };
   });
 
-  void win.loadURL(startUrl);
+  void win.loadURL(startUrl ?? provider.homeUrl);
   return win;
 }

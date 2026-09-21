@@ -1,17 +1,15 @@
 import { sendMessage } from "./chat-input";
 import { getProviderByUrl } from "../providers";
-import { getCodeBlocksByLang } from "../providers/zai";
 import { TOOL_BLOCK_LANG } from "../shared/constants";
 import { ipc } from "./ipc";
 import { showTask, showResult } from "./overlay";
 
 /**
- * The agent loop for z.ai.
+ * The agent loop.
  *
- * z.ai renders fenced code blocks as `div.language-<lang>` elements (no
- * <pre>/<code>), so we read blocks straight from the DOM instead of parsing
- * markdown. A reply may contain several tool blocks; we run them in order and
- * send the combined output back as one user message.
+ * We watch the page for a finished assistant reply, pull the tool blocks out
+ * of it via the active provider's DOM adapter, run them in the main-process
+ * sandbox, and feed the combined output back as one user message.
  */
 
 const TOOL_RESULT_HEADER = "Tool execution results:";
@@ -24,7 +22,10 @@ async function handleReply(el: HTMLElement): Promise<void> {
   if (executing) return;
   if (HANDLED.has(el)) return;
 
-  const blocks = getCodeBlocksByLang(el, TOOL_BLOCK_LANG);
+  const provider = getProviderByUrl(location.href);
+  if (!provider) return;
+
+  const blocks = provider.getToolBlocks(el, TOOL_BLOCK_LANG);
   if (blocks.length === 0) return;
 
   HANDLED.add(el);

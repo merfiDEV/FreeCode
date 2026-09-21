@@ -7,6 +7,7 @@
 import { sendMessage } from "./chat-input";
 import { ipc } from "./ipc";
 import { iconDataUri } from "./icon";
+import { getProviderByUrl } from "../providers";
 import { t, setLanguage, detectLanguage, getLanguage, type Language } from "./i18n";
 
 let panel: HTMLElement | null = null;
@@ -37,6 +38,9 @@ let resultSep: HTMLElement | null = null;
 let resultBox: HTMLElement | null = null;
 let resultTextEl: HTMLElement | null = null;
 let statusIconEl: HTMLElement | null = null;
+
+let providerHeadingEl: HTMLElement | null = null;
+let providerSelect: HTMLSelectElement | null = null;
 
 let projectDirCache: string | null = null;
 let lastResult: { ok: boolean; text: string } | null = null;
@@ -239,6 +243,25 @@ const STYLE = `
   border-top: 1px solid var(--fc-divider);
   margin: 0 -3px;
   width: calc(100% + 6px);
+}
+
+#freecode-overlay .fc-provider-select {
+  width: 100%;
+  background: var(--fc-input-bg);
+  border: 1px solid var(--fc-input-border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fc-input-text);
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+#freecode-overlay .fc-provider-select:focus {
+  border-color: var(--fc-input-focus);
+  box-shadow: 0 0 0 1px var(--fc-input-focus);
 }
 
 #freecode-overlay .fc-delay-row {
@@ -476,8 +499,10 @@ function injectFonts(): void {
 
 // ===== Theme =====
 
-/** True when the host page is in dark mode (z.ai sets class="dark" on <html>). */
+/** True when the host page is in dark mode — decided by the active provider. */
 function isDarkPage(): boolean {
+  const provider = getProviderByUrl(location.href);
+  if (provider) return provider.isDarkMode();
   const html = document.documentElement;
   return html.classList.contains("dark") || html.getAttribute("data-theme") === "dark";
 }
@@ -490,10 +515,14 @@ function applyTheme(): void {
 /** Keep the overlay theme in sync with the page. */
 function watchTheme(): void {
   const observer = new MutationObserver(() => applyTheme());
-  observer.observe(document.documentElement, {
+  const opts: MutationObserverInit = {
     attributes: true,
-    attributeFilter: ["class", "data-theme"],
-  });
+    attributeFilter: ["class", "data-theme", "data-color-scheme", "data-ds-dark-theme"],
+  };
+  // Some sites set the theme on <html>, others on <body> (DeepSeek) — watch both.
+  observer.observe(document.documentElement, opts);
+  if (document.body) observer.observe(document.body, opts);
+  else document.addEventListener("DOMContentLoaded", () => observer.observe(document.body, opts), { once: true });
 }
 
 // ===== Collapse / expand =====
@@ -512,6 +541,7 @@ function langBadge(): string {
 
 /** Re-apply all translated strings to the existing DOM. */
 function applyTranslations(): void {
+  if (providerHeadingEl) providerHeadingEl.textContent = t("overlay.provider.heading");
   if (projectHeadingEl) projectHeadingEl.textContent = t("overlay.project.heading");
   if (changeBtn && !changeBtn.disabled) changeBtn.textContent = t("overlay.project.change");
   if (projectDirEl) projectDirEl.textContent = projectDirCache ?? t("overlay.project.none");
@@ -555,6 +585,38 @@ async function handleToggleLanguage(): Promise<void> {
     await ipc.setSettings({ language: next });
   } catch (err) {
     console.error("[freecode] failed to save language:", err);
+  }
+}
+
+// ===== Provider =====
+
+async function loadProviders(): Promise<void> {
+  if (!providerSelect) return;
+  try {
+    const providers = await ipc.listProviders();
+    const active = getProviderByUrl(location.href);
+    providerSelect.innerHTML = "";
+    for (const p of providers) {
+      const opt = el("option");
+      opt.value = p.id;
+      opt.textContent = p.name;
+      if (active && p.id === active.id) opt.selected = true;
+      providerSelect.appendChild(opt);
+    }
+  } catch (err) {
+    console.error("[freecode] failed to load providers:", err);
+  }
+}
+
+async function handleSwitchProvider(): Promise<void> {
+  if (!providerSelect) return;
+  const target = providerSelect.value;
+  const active = getProviderByUrl(location.href);
+  if (active && target === active.id) return;
+  try {
+    await ipc.switchProvider(target);
+  } catch (err) {
+    console.error("[freecode] failed to switch provider:", err);
   }
 }
 
@@ -690,6 +752,14 @@ export function injectOverlay(): void {
   const root = el("div");
   root.id = "freecode-overlay";
 
+  // --- Provider section ---
+  const providerSection = el("section", "fc-section");
+  providerHeadingEl = el("h2", "fc-heading", t("overlay.provider.heading"));
+  providerSelect = el("select", "fc-provider-select");
+  providerSelect.addEventListener("change", () => void handleSwitchProvider());
+  providerSection.append(providerHeadingEl, providerSelect);
+  const providerSep = el("hr", "fc-divider");
+
   // --- Directory section ---
   const dirSection = el("section", "fc-section");
 
@@ -780,6 +850,8 @@ export function injectOverlay(): void {
   const delaySep = el("hr", "fc-divider");
 
   root.append(
+    providerSection,
+    providerSep,
     dirSection,
     delaySep,
     delaySection,
@@ -824,6 +896,7 @@ export function injectOverlay(): void {
     void refreshProjectDir();
   });
 
+  void loadProviders();
   void refreshProjectDir();
   void loadDelay();
 }

@@ -1,6 +1,7 @@
 /** English strings for the overlay UI. */
 export const en = {
   "overlay.title": "freecode",
+  "overlay.provider.heading": "PLATFORM",
   "overlay.lang.switch": "Switch language",
   "overlay.collapse": "Collapse",
   "overlay.expandTitle": "Open freecode panel",

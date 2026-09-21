@@ -6,6 +6,8 @@ import { dataRoot } from "./paths";
  * User settings persisted as JSON in the data folder.
  */
 export interface Settings {
+  /** Provider id the app opens, e.g. "zai" or "deepseek". */
+  providerId: string;
   /** Lower bound of the random send delay, in seconds. */
   sendDelayMin: number;
   /** Upper bound of the random send delay, in seconds. */
@@ -15,6 +17,7 @@ export interface Settings {
 }
 
 const DEFAULTS: Settings = {
+  providerId: "zai",
   sendDelayMin: 2,
   sendDelayMax: 5.9,
   language: "en",
@@ -30,6 +33,7 @@ export function readSettings(): Settings {
     const raw = fs.readFileSync(settingsPath(), "utf-8");
     const parsed = JSON.parse(raw) as Partial<Settings>;
     return {
+      providerId: typeof parsed.providerId === "string" && parsed.providerId ? parsed.providerId : DEFAULTS.providerId,
       sendDelayMin: clamp(parsed.sendDelayMin, 0, 120, DEFAULTS.sendDelayMin),
       sendDelayMax: clamp(parsed.sendDelayMax, 0, 120, DEFAULTS.sendDelayMax),
       language: parsed.language === "ru" ? "ru" : "en",

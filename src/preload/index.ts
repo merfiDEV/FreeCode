@@ -4,7 +4,7 @@ import { startObserver } from "./observer";
 import { injectOverlay, initI18n, getSendDelayRange } from "./overlay";
 import { setSendDelayRange } from "./chat-input";
 import { startLoginDetector } from "./login-detector";
-import { ZAI } from "../shared/constants";
+import { getProviderByUrl } from "../providers";
 
 // Mask automation markers before any page script runs.
 applyStealth();
@@ -14,36 +14,44 @@ exposeApi();
 
 console.log("[freecode] preload started");
 
-const AUTH_URL = ZAI.authUrl;
-
 let overlayMounted = false;
 let observerStarted = false;
 let lastUrl = "";
 
 /**
- * React to SPA navigation. z.ai moves from /auth to / without a full reload,
- * so we re-check on every URL change instead of relying on boot() rerunning.
+ * React to SPA navigation. Chat sites move between auth and chat pages without
+ * a full reload, so we re-check on every URL change instead of relying on
+ * boot() rerunning.
+ *
+ * We gate on provider.isLoggedIn() rather than on the URL: some sites use the
+ * same URL for the login page and the chat (DeepSeek), so a URL comparison
+ * cannot tell them apart. Once signed in, the overlay and the agent loop are
+ * mounted; they stay mounted for the rest of the session.
  */
 function syncWithLocation(): void {
   const url = location.href;
-  const onAuth = url.startsWith(AUTH_URL);
+  const provider = getProviderByUrl(url);
+  if (!provider) return;
 
-  if (!onAuth) {
-    if (!overlayMounted) {
-      try {
-        injectOverlay();
-        overlayMounted = true;
-      } catch (err) {
-        console.error("[freecode] overlay error:", err);
-      }
+  if (!provider.isLoggedIn()) {
+    lastUrl = url;
+    return;
+  }
+
+  if (!overlayMounted) {
+    try {
+      injectOverlay();
+      overlayMounted = true;
+    } catch (err) {
+      console.error("[freecode] overlay error:", err);
     }
-    if (!observerStarted) {
-      try {
-        startObserver();
-        observerStarted = true;
-      } catch (err) {
-        console.error("[freecode] observer error:", err);
-      }
+  }
+  if (!observerStarted) {
+    try {
+      startObserver();
+      observerStarted = true;
+    } catch (err) {
+      console.error("[freecode] observer error:", err);
     }
   }
 

@@ -13,6 +13,8 @@ export const ipc: ElectronAPI = {
   markLoggedIn: () => ipcRenderer.invoke("mark-logged-in"),
   getSettings: () => ipcRenderer.invoke("get-settings"),
   setSettings: (patch: Partial<Settings>) => ipcRenderer.invoke("set-settings", patch),
+  listProviders: () => ipcRenderer.invoke("list-providers"),
+  switchProvider: (providerId: string) => ipcRenderer.invoke("switch-provider", providerId),
   onProjectContextChanged: (cb: () => void) => {
     const listener = (): void => cb();
     ipcRenderer.on("project-context-changed", listener);

@@ -5,10 +5,10 @@ import { dataRoot } from "./paths";
 /**
  * Persistent mapping of chat sessions to their project directories.
  *
- * The URL of a z.ai conversation looks like https://chat.z.ai/c/<sessionId>.
- * Remembering which directory was chosen for which session means the overlay
- * and the tools keep working when the user returns to an older conversation
- * (and across app restarts).
+ * Keys are namespaced as "<providerId>:<sessionId>" so that conversations on
+ * different platforms never collide. Remembering which directory belongs to
+ * which chat keeps the overlay and the tools working when the user returns to
+ * an older conversation (and across app restarts).
  */
 
 function storePath(): string {
@@ -42,26 +42,28 @@ function writeStore(store: Store): void {
   }
 }
 
-/** Directory remembered for a session, or null. */
-export function getProjectDirForSession(sessionId: string | null): string | null {
+function key(providerId: string, sessionId: string): string {
+  return providerId + ":" + sessionId;
+}
+
+/** Directory remembered for a provider + session, or null. */
+export function getProjectDirForSession(providerId: string, sessionId: string | null): string | null {
   if (!sessionId) return null;
-  const dir = readStore()[sessionId] ?? null;
+  const dir = readStore()[key(providerId, sessionId)] ?? null;
   if (dir && !fs.existsSync(dir)) return null;
   return dir;
 }
 
-/** Remember (or clear) the directory for a session. */
-export function setProjectDirForSession(sessionId: string | null, dir: string | null): void {
+/** Remember (or clear) the directory for a provider + session. */
+export function setProjectDirForSession(
+  providerId: string,
+  sessionId: string | null,
+  dir: string | null,
+): void {
   if (!sessionId) return;
   const store = readStore();
-  if (dir) store[sessionId] = dir;
-  else delete store[sessionId];
+  const k = key(providerId, sessionId);
+  if (dir) store[k] = dir;
+  else delete store[k];
   writeStore(store);
-}
-
-/** Extract the session id from a z.ai conversation URL. */
-export function extractSessionId(url: string): string | null {
-  if (!url) return null;
-  const m = url.match(/\/c\/([a-zA-Z0-9-]+)/);
-  return m ? m[1] : null;
 }

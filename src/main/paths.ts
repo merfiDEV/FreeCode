@@ -20,20 +20,20 @@ export function dataRoot(): string {
 }
 
 /**
- * Marker file that records a successful z.ai sign-in.
- * While it is absent the app opens the auth page instead of the chat.
+ * Per-provider marker file recording a successful sign-in.
+ * While it is absent the app opens the provider's auth page.
  */
-function loginMarkerPath(): string {
-  return path.join(dataRoot(), ".logged-in");
+function loginMarkerPath(providerId: string): string {
+  return path.join(dataRoot(), "." + providerId + ".logged-in");
 }
 
-export function hasLoginMarker(): boolean {
-  return fs.existsSync(loginMarkerPath());
+export function hasLoginMarker(providerId: string): boolean {
+  return fs.existsSync(loginMarkerPath(providerId));
 }
 
-export function markLoggedIn(): void {
+export function markLoggedIn(providerId: string): void {
   try {
-    fs.writeFileSync(loginMarkerPath(), new Date().toISOString(), "utf-8");
+    fs.writeFileSync(loginMarkerPath(providerId), new Date().toISOString(), "utf-8");
   } catch (err) {
     console.error("[freecode] failed to write login marker:", (err as Error).message);
   }

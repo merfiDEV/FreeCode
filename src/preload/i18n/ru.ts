@@ -3,6 +3,7 @@ import type { TranslationKey } from "./en";
 /** Russian strings for the overlay UI. */
 export const ru: Record<TranslationKey, string> = {
   "overlay.title": "freecode",
+  "overlay.provider.heading": "ПЛАТФОРМА",
   "overlay.lang.switch": "Сменить язык",
   "overlay.collapse": "Свернуть",
   "overlay.expandTitle": "Открыть панель freecode",
