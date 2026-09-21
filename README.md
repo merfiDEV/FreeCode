@@ -27,7 +27,8 @@ your regular web account.
 Web chats are great at *thinking*, but they cannot *act* on your machine.
 freecode closes that loop:
 
-- **Zero token cost** — everything goes through the z.ai web UI, no API calls.
+- **Multi-platform** — ships with adapters for z.ai and DeepSeek; add another chat site by writing one adapter file.
+- **Zero token cost** — everything goes through the site's web UI, no API calls.
 - **Real agent loop** — Think → Act → Observe → Repeat. File I/O, code search, shell commands.
 - **Native desktop shell** — an Electron wrapper with a small overlay panel.
 - **Persistent login** — sign in once; the session is stored outside the app and reused on every launch.
@@ -157,6 +158,30 @@ To trigger a release manually, bump the version and push a `v*` tag; the
 `Release: Build & Publish` workflow (`.github/workflows/release.yml`) handles
 tagged builds. Local packaging uses `npm run build:win:portable:local`, which
 writes artifacts to `release/`.
+
+## Platforms
+
+freecode is built around pluggable **providers** — one adapter per chat site.
+Everything site-specific (selectors, URLs, auth detection, theme detection,
+session-id parsing) lives in a single file under `src/providers/`.
+
+Built-in providers:
+
+| Provider | Site | Auth page | Session partition |
+| --- | --- | --- | --- |
+| `zai` | chat.z.ai | `/auth` | `persist:zai` |
+| `deepseek` | chat.deepseek.com | (home) | `persist:deepseek` |
+
+Each provider gets its **own Electron session partition**, so logins never mix
+between platforms. The active platform is stored in `settings.json`
+(`providerId`) and can be switched at runtime from the overlay.
+
+### Adding a provider
+
+Create `src/providers/<id>.ts` exporting a `Provider` (see
+`src/shared/types.ts`) and register it in `src/providers/index.ts`. No other
+file needs to change — the window, agent loop, overlay, login detection, theme
+and session store are all provider-agnostic.
 
 ## Architecture
 
