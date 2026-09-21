@@ -1,0 +1,21 @@
+{
+  "name": "freecode",
+  "version": "0.1.0",
+  "description": "freecode — desktop AI agent for z.ai (zero API cost)",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "build": "tsc && node scripts/copy-assets.js",
+    "watch": "tsc -w",
+    "start": "npm run build && electron .",
+    "clean": "rimraf dist"
+  },
+  "keywords": ["z.ai", "electron", "ai", "agent", "freecode"],
+  "license": "MIT",
+  "engines": { "node": ">=16.0.0" },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "electron": "^33.0.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.6.2"
+  }
+}
