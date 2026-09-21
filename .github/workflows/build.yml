@@ -3,11 +3,17 @@ name: "CI: Bump, Build & Release"
 on:
   push:
     branches: [main]
+    # Skip runs whose only change is the automated version bump.
+    paths-ignore:
+      - 'package.json'
+      - 'package-lock.json'
 
-# Do not run on the auto-bump commit itself.
+# Serialise runs, but never cancel an in-progress build: the bump commit
+# itself triggers a follow-up run, and cancelling the running one would kill
+# the build/release steps mid-flight.
 concurrency:
   group: ci-release
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: write
