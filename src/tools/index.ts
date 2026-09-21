@@ -12,6 +12,7 @@ import { TodoWriteTool, TodoEditTool, TodoDeleteTool } from "./TodoTools";
 import { OpenBrowserWindowTool, InjectJSTool, InjectPageJSTool } from "./BrowserTools";
 import { SkillListTool, SkillLoadTool, SkillExecuteTool } from "./SkillTools";
 import { AskUserQuestionTool } from "./AskUserQuestionTool";
+import { ReadClipboardTool, WriteClipboardTool } from "./ClipboardTool";
 
 export { ToolRegistry } from "./ToolRegistry";
 export { JsRunner } from "./JsRunner";
@@ -51,6 +52,9 @@ export function createDefaultRegistry(): ToolRegistry {
     SkillExecuteTool,
     // Interaction
     AskUserQuestionTool,
+    // Clipboard
+    ReadClipboardTool,
+    WriteClipboardTool,
   ] as unknown as Array<import("./types").ToolDefinition<Record<string, unknown>>>;
   for (const tool of all) registry.register(tool);
   return registry;
