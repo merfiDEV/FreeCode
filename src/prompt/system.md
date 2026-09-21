@@ -27,6 +27,7 @@ log(content);
 ## Environment
 
 {{PLATFORM_INFO}}
+{{MCP_SECTION}}
 
 ## Rules
 

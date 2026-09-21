@@ -3,6 +3,7 @@ import { createHubWindow } from "./hub-window";
 import { registerIpcHandlers } from "./ipc";
 import { dataRoot } from "./paths";
 import { applyUserAgentMask } from "./user-agent";
+import { connectEnabledServers } from "./mcp-client";
 import { APP } from "../shared/constants";
 
 // Store the whole browser session (cookies, localStorage, cache) in a
@@ -38,6 +39,13 @@ if (!gotLock) {
 app.whenReady().then(() => {
   if (!gotLock) return;
   registerIpcHandlers();
+
+  // Connect configured MCP servers in the background so their tools are ready
+  // by the time the model asks for them.
+  connectEnabledServers().catch((err) => {
+    console.error("[freecode][mcp] startup connect failed:", (err as Error).message);
+  });
+
   console.log("[freecode] opening hub");
   // The hub is the start screen; the user picks a platform from there.
   createHubWindow();

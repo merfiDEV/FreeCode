@@ -7,6 +7,7 @@ import { GlobTool } from "./GlobTool";
 import { GrepTool } from "./GrepTool";
 import { BashTool } from "./BashTool";
 import { PwshTool } from "./PwshTool";
+import { McpCallTool, McpGetToolsTool, McpListServersTool } from "./McpTools";
 
 export { ToolRegistry } from "./ToolRegistry";
 export { JsRunner } from "./JsRunner";
@@ -25,6 +26,9 @@ export function createDefaultRegistry(): ToolRegistry {
     GrepTool,
     BashTool,
     PwshTool,
+    McpCallTool,
+    McpGetToolsTool,
+    McpListServersTool,
   ] as unknown as Array<import("./types").ToolDefinition<Record<string, unknown>>>;
   for (const tool of all) registry.register(tool);
   return registry;

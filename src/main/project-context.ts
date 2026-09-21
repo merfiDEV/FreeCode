@@ -48,6 +48,22 @@ function platformInfo(): string {
   return "- OS: Linux (" + arch + ")\n  - bash runs through bash\n  - path separator is /";
 }
 
+/** MCP usage instructions appended to the prompt. */
+function mcpSection(): string {
+  return [
+    "## MCP capability",
+    "",
+    "This app supports external MCP (Model Context Protocol) tools.",
+    "",
+    "Before using an MCP server, discover what is available:",
+    "1. Call \`mcpListServers()\` to see configured servers (enabled/connected state).",
+    "2. Call \`mcpGetTools(serverName)\` to see that server's tools and arguments.",
+    "3. Call \`mcpCall(server, tool, args)\` to invoke a specific tool.",
+    "",
+    "MCP servers may be disabled or fail to connect — trust the live output of \`mcpListServers()\`.",
+  ].join("\n");
+}
+
 /**
  * Build the tool list from the registry. Every tool supplies its own call
  * signature and description, so adding a new tool automatically documents it
@@ -78,6 +94,7 @@ export function buildInitPrompt(selectedDir: string, registry: ToolRegistry): st
     "{{TOOLS_LIST}}": toolsList(registry),
     "{{PLATFORM_INFO}}": platformInfo(),
     "{{PROJECT_DIR}}": selectedDir,
+    "{{MCP_SECTION}}": mcpSection(),
     "{{PROJECT_TREE}}": tree
       ? "\n\n## Project structure\n\n\`\`\`\n" + tree + "\`\`\`"
       : "",
