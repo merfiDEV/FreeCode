@@ -58,7 +58,8 @@
       {
         "provider": "github",
         "owner": "merfiDEV",
-        "repo": "FreeCode"
+        "repo": "FreeCode",
+        "releaseType": "release"
       }
     ],
     "directories": {
