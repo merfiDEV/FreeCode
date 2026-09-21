@@ -82,8 +82,11 @@ npm start
 | `npm start` | Build and launch the app |
 | `npm run build` | Compile TypeScript and copy prompt assets into `dist/` |
 | `npm run watch` | Recompile on change (run in a separate terminal) |
-| `npm run clean` | Remove `dist/` |
+| `npm run clean` | Remove `dist/` and `release/` |
 | `npx tsc --noEmit` | Type-check without emitting files |
+| `npm run build:win` | Build the Windows installer, portable exe and zip |
+| `npm run build:win:portable` | Build only the Windows portable exe |
+| `npm run build:win:local` | Same as `build:win` but without publishing |
 
 ---
 
@@ -137,6 +140,23 @@ log("scripts:", Object.keys(pkg.scripts || {}).join(", "));
 ```
 
 ---
+
+## Releases
+
+Pushing to `main` triggers the **CI: Bump, Build & Release** workflow
+(`.github/workflows/build.yml`):
+
+1. **bump** — computes the next patch version, writes it into `package.json`
+   and `package-lock.json`, and commits the change.
+2. **build** — runs on `windows-latest`, produces the NSIS installer, the
+   **portable executable** and a zip, then uploads them as artifacts.
+3. **release** — publishes a GitHub Release tagged `v<version>` with the
+   generated release notes and attaches the artifacts.
+
+To trigger a release manually, bump the version and push a `v*` tag; the
+`Release: Build & Publish` workflow (`.github/workflows/release.yml`) handles
+tagged builds. Local packaging uses `npm run build:win:portable:local`, which
+writes artifacts to `release/`.
 
 ## Architecture
 

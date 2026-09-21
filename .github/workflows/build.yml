@@ -1,0 +1,118 @@
+name: "CI: Bump, Build & Release"
+
+on:
+  push:
+    branches: [main]
+
+# Do not run on the auto-bump commit itself.
+concurrency:
+  group: ci-release
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  # ── 1. Compute the next patch version ───────────────────────────────────
+  bump:
+    if: "!startsWith(github.event.head_commit.message, 'chore: bump version to')"
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.calc.outputs.version }}
+      tag:     ${{ steps.calc.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Compute next patch version
+        id: calc
+        run: |
+          CUR=$(node -p "require('./package.json').version")
+          LAST=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1 | sed 's/^v//')
+          BASE=$(node -e "const a='$CUR'.split('.').map(Number),b='${LAST:-0.0.0}'.split('.').map(Number);const m=(x,y)=>(x||0)>(y||0)?(x||0):(y||0);console.log([0,1,2].map(i=>m(a[i],b[i])).join('.'))")
+          NEXT=$(node -e "const v='$BASE'.split('.').map(Number);v[2]++;console.log(v.join('.'))")
+          echo "version=$NEXT" >> "$GITHUB_OUTPUT"
+          echo "tag=v$NEXT"    >> "$GITHUB_OUTPUT"
+          echo "Bump: $CUR (last tag: ${LAST:-none}) -> $NEXT"
+
+      - name: Update package.json + package-lock.json
+        run: |
+          VER="${{ steps.calc.outputs.version }}"
+          node -e "
+            const fs=require('fs');
+            const p=JSON.parse(fs.readFileSync('package.json','utf8'));
+            p.version='$VER';
+            fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');
+          "
+          node -e "
+            const fs=require('fs');
+            if(!fs.existsSync('package-lock.json'))process.exit(0);
+            const l=JSON.parse(fs.readFileSync('package-lock.json','utf8'));
+            if(l.version)l.version='$VER';
+            if(l.packages&&l.packages[''])l.packages[''].version='$VER';
+            fs.writeFileSync('package-lock.json',JSON.stringify(l,null,2)+'\n');
+          "
+
+      - name: Commit & push version bump
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore: bump version to ${{ steps.calc.outputs.version }}" || echo "Nothing to commit"
+          git push origin main
+
+  # ── 2. Build the Windows portable + installer ───────────────────────────
+  build:
+    needs: bump
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Sync version from computed tag
+        run: node scripts/sync-version.js
+        env:
+          APP_VERSION: ${{ needs.bump.outputs.tag }}
+
+      - run: npm install --no-fund --no-audit
+
+      - name: Build (nsis + portable + zip)
+        run: npm run build:win:local
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Windows-build
+          path: |
+            release/*.exe
+            release/*.exe.blockmap
+            release/*.zip
+            release/latest.yml
+          retention-days: 7
+
+  # ── 3. Publish the GitHub Release ───────────────────────────────────────
+  release:
+    needs: [bump, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: Windows-build
+          path: artifacts/win
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ needs.bump.outputs.tag }}
+          name: ${{ needs.bump.outputs.tag }}
+          generate_release_notes: true
+          files: artifacts/win/*

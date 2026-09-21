@@ -81,8 +81,11 @@ npm start
 | `npm start` | Собрать и запустить приложение |
 | `npm run build` | Скомпилировать TypeScript и скопировать промпт-ассеты в `dist/` |
 | `npm run watch` | Пересборка при изменениях (в отдельном терминале) |
-| `npm run clean` | Удалить `dist/` |
+| `npm run clean` | Удалить `dist/` и `release/` |
 | `npx tsc --noEmit` | Проверка типов без записи файлов |
+| `npm run build:win` | Собрать установщик Windows, portable exe и zip |
+| `npm run build:win:portable` | Собрать только portable exe для Windows |
+| `npm run build:win:local` | Как `build:win`, но без публикации |
 
 ---
 
@@ -136,6 +139,23 @@ log("scripts:", Object.keys(pkg.scripts || {}).join(", "));
 ```
 
 ---
+
+## Релизы
+
+Пуш в `main` запускает workflow **CI: Bump, Build & Release**
+(`.github/workflows/build.yml`):
+
+1. **bump** — вычисляет следующую patch-версию, записывает её в `package.json`
+   и `package-lock.json` и коммитит изменение.
+2. **build** — выполняется на `windows-latest`, собирает установщик NSIS,
+   **portable-исполняемый файл** и zip, затем загружает их как артефакты.
+3. **release** — публикует GitHub Release с тегом `v<версия>`, автоматическими
+   заметками о релизе и прикреплёнными артефактами.
+
+Чтобы выпустить релиз вручную, поднимите версию и запушьте тег `v*` — его
+обработает workflow `Release: Build & Publish` (`.github/workflows/release.yml`).
+Локальная сборка: `npm run build:win:portable:local`, артефакты попадают в
+`release/`.
 
 ## Архитектура
 

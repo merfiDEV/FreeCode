@@ -7,15 +7,68 @@
     "build": "tsc && node scripts/copy-assets.js",
     "watch": "tsc -w",
     "start": "npm run build && electron .",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist release",
+    "build:win": "npm run build && electron-builder --win --publish always",
+    "build:win:local": "npm run build && electron-builder --win --publish never",
+    "build:win:portable": "npm run build && electron-builder --win --config.win.target=portable --publish always",
+    "build:win:portable:local": "npm run build && electron-builder --win --config.win.target=portable --publish never"
   },
   "keywords": ["z.ai", "electron", "ai", "agent", "freecode"],
+  "author": {
+    "name": "MerfiDEV",
+    "url": "https://github.com/merfiDEV"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/merfiDEV/FreeCode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/merfiDEV/FreeCode/issues"
+  },
+  "homepage": "https://github.com/merfiDEV/FreeCode#readme",
   "engines": { "node": ">=16.0.0" },
+  "os": ["win32", "darwin", "linux"],
   "devDependencies": {
     "@types/node": "^22.7.0",
     "electron": "^33.0.0",
+    "electron-builder": "^24.13.3",
     "rimraf": "^6.0.1",
     "typescript": "^5.6.2"
+  },
+  "build": {
+    "appId": "com.freecode.freecode",
+    "productName": "freecode",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "merfiDEV",
+        "repo": "FreeCode"
+      }
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": ["nsis", "portable", "zip"],
+      "icon": "build/icon.ico",
+      "artifactName": "freecode-win-v${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "freecode-win-v${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "freecode-win-v${version}-portable.${ext}"
+    },
+    "files": [
+      "dist/**/*",
+      "build/icon.ico",
+      "build/icon.png",
+      "package.json"
+    ]
   }
 }
