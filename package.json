@@ -1,6 +1,6 @@
 {
   "name": "freecode",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "freecode — desktop AI agent for z.ai (zero API cost)",
   "main": "dist/main/index.js",
   "scripts": {
@@ -13,7 +13,13 @@
     "build:win:portable": "npm run build && electron-builder --win --config.win.target=portable --publish always",
     "build:win:portable:local": "npm run build && electron-builder --win --config.win.target=portable --publish never"
   },
-  "keywords": ["z.ai", "electron", "ai", "agent", "freecode"],
+  "keywords": [
+    "z.ai",
+    "electron",
+    "ai",
+    "agent",
+    "freecode"
+  ],
   "author": {
     "name": "MerfiDEV",
     "url": "https://github.com/merfiDEV"
@@ -27,8 +33,14 @@
     "url": "https://github.com/merfiDEV/FreeCode/issues"
   },
   "homepage": "https://github.com/merfiDEV/FreeCode#readme",
-  "engines": { "node": ">=16.0.0" },
-  "os": ["win32", "darwin", "linux"],
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "os": [
+    "win32",
+    "darwin",
+    "linux"
+  ],
   "devDependencies": {
     "@types/node": "^22.7.0",
     "electron": "^33.0.0",
@@ -50,7 +62,11 @@
       "output": "release"
     },
     "win": {
-      "target": ["nsis", "portable", "zip"],
+      "target": [
+        "nsis",
+        "portable",
+        "zip"
+      ],
       "icon": "build/icon.ico",
       "artifactName": "freecode-win-v${version}-${arch}.${ext}"
     },
