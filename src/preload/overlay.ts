@@ -1107,10 +1107,11 @@ function closeAskModal(): void {
 /** Render the question form and remember the request id. */
 function openAskModal(payload: { requestId: string; questions: AskQuestion[] }): void {
   if (!askModal || !askBodyEl) return;
+  const body = askBodyEl;
   askState = payload;
   applyThemeToAskModal();
 
-  askBodyEl.innerHTML = "";
+  body.innerHTML = "";
   payload.questions.forEach((q, qi) => {
     const block = el("div", "fc-ask-q");
     block.appendChild(el("div", "fc-ask-qtext", q.question));
@@ -1146,7 +1147,7 @@ function openAskModal(payload: { requestId: string; questions: AskQuestion[] }):
     custom.dataset.qIndex = String(qi);
     block.appendChild(custom);
 
-    askBodyEl.appendChild(block);
+    body.appendChild(block);
   });
 
   askModal.classList.remove("fc-hidden");
