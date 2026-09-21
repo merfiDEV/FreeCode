@@ -17,14 +17,44 @@
  * wrapped in literal tags. This module detects that shape and unwraps it.
  */
 
-/** True when the line looks like a read-result row: "12: text". */
-function isNumberedLine(line: string): boolean {
-  return /^\s*\d+:\s?/.test(line);
+/** "12: text" — a read-result row. */
+const NUMBERED = /^\s*(\d+):\s?/;
+
+/** Content that legitimately uses "N:" — JS labels, YAML, timestamps, URLs. */
+function looksLikeRealCode(line: string): boolean {
+  const t = line.trim();
+  // "case 1:" / "default:" / "http://..." / "12:30" / YAML keys / JS labels.
+  if (/^(case|default)\b/.test(t)) return true;
+  if (/^https?:\/\//.test(t)) return true;
+  if (/^\d{1,2}:\d{2}/.test(t)) return true; // timestamp 12:30
+  if (/^[A-Za-z_$][\w$]*:\s*$/.test(t)) return true; // JS label
+  return false;
 }
 
 /** Remove the "N: " prefix from one line (tolerating aligned numbers). */
 function stripLineNumber(line: string): string {
-  return line.replace(/^\s*\d+:\s?/, "");
+  return line.replace(NUMBERED, "");
+}
+
+/**
+ * Numbered rows form a monotonically increasing run starting at 1.
+ * Checks the first few numbers so a stray "12:" in prose does not match.
+ */
+function isSequentialNumbering(lines: string[]): boolean {
+  const numbers: number[] = [];
+  for (const line of lines) {
+    const m = line.match(NUMBERED);
+    if (!m) continue;
+    if (looksLikeRealCode(line)) return false;
+    numbers.push(Number(m[1]));
+    if (numbers.length >= 5) break;
+  }
+  if (numbers.length === 0) return false;
+  if (numbers[0] !== 1) return false;
+  for (let i = 1; i < numbers.length; i++) {
+    if (numbers[i] !== numbers[i - 1] + 1) return false;
+  }
+  return true;
 }
 
 /**
@@ -41,7 +71,12 @@ export function sanitizeFileContent(raw: string): string {
   if (envelope !== null) return envelope;
 
   // 2. Numbered lines without the tags (the model kept the numbers only).
-  if (looksEntirelyNumbered(raw)) return stripAllLineNumbers(raw);
+  //    Accepts even a single "1: …" line, as long as the run starts at 1.
+  const lines = raw.split(/\r?\n/);
+  const nonEmpty = lines.filter((l) => l.trim().length > 0);
+  if (nonEmpty.length > 0 && isSequentialNumbering(nonEmpty)) {
+    return stripAllLineNumbers(raw);
+  }
 
   return raw;
 }
@@ -67,15 +102,6 @@ function unwrapReadEnvelope(raw: string): string | null {
   body = body.replace(/\r?\n\s*\((End of file|Showing)[^)]*\)\s*$/, "");
 
   return stripAllLineNumbers(body);
-}
-
-/** True when at least 80% of non-empty lines carry a "N: " prefix. */
-function looksEntirelyNumbered(text: string): boolean {
-  const lines = text.split(/\r?\n/);
-  const nonEmpty = lines.filter((l) => l.trim().length > 0);
-  if (nonEmpty.length < 3) return false;
-  const numbered = nonEmpty.filter(isNumberedLine).length;
-  return numbered / nonEmpty.length >= 0.8;
 }
 
 /** Drop the "N: " prefix from every line. */
