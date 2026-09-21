@@ -26,6 +26,26 @@ export const en = {
   "overlay.result.success": "JS script executed successfully",
   "overlay.result.error": "JS script failed",
   "overlay.result.empty": "No result yet",
+
+  "overlay.mcp.heading": "MCP SERVERS",
+  "overlay.mcp.add": "Add MCP",
+  "overlay.mcp.title": "MCP servers",
+  "overlay.mcp.configured": "Configured",
+  "overlay.mcp.empty": "No MCP servers yet",
+  "overlay.mcp.save": "Save config",
+  "overlay.mcp.saved": "Config saved",
+  "overlay.mcp.refresh": "Refresh",
+  "overlay.mcp.close": "Close",
+  "overlay.mcp.placeholder": "{\n  \"mcpServers\": {\n    \"filesystem\": {\n      \"command\": \"npx\",\n      \"args\": [\"-y\", \"@modelcontextprotocol/server-filesystem\", \"C:/my-project\"]\n    }\n  }\n}",
+  "overlay.mcp.status.connected": "connected",
+  "overlay.mcp.status.pending": "not connected",
+  "overlay.mcp.status.disabled": "disabled",
+  "overlay.mcp.invalidJson": "Invalid JSON",
+  "overlay.mcp.needServers": "Config must contain an mcpServers object",
+  "overlay.mcp.serverError": "Server \"{name}\": {msg}",
+  "overlay.mcp.connecting": "Connecting {name}…",
+  "overlay.mcp.connected": "{name} — connected, tools: {n}",
+  "overlay.mcp.connectFailed": "{name} — connection failed",
 } as const;
 
 export type TranslationKey = keyof typeof en;

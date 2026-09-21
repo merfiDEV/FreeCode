@@ -9,6 +9,9 @@ import { createMainWindow } from "./window";
 import { getHubWindow } from "./hub-window";
 import { getAllProviderStates, touchProvider } from "./provider-state";
 import { getLastProjectDirForProvider } from "./project-store";
+import * as mcpConfig from "./mcp-config";
+import * as mcpClient from "./mcp-client";
+import type { McpServer } from "./mcp-config";
 
 const registry = createDefaultRegistry();
 const jsRunner = new JsRunner(registry);
@@ -99,6 +102,52 @@ export function registerIpcHandlers(): void {
     const ctx = getContextByWebContents(event.sender);
     if (ctx && !ctx.win.isDestroyed()) ctx.win.close();
     return { ok: true };
+  });
+
+  // ===== MCP IPC =====
+  ipcMain.handle("list-mcp-servers", () => ({
+    success: true,
+    servers: mcpClient.listConfiguredServers(),
+    config: mcpConfig.getServers(),
+  }));
+
+  ipcMain.handle("upsert-mcp-server", (_event, payload: { server: McpServer }) => {
+    mcpConfig.upsertServer(payload.server);
+    return { success: true };
+  });
+
+  ipcMain.handle("remove-mcp-server", async (_event, payload: { name: string }) => {
+    await mcpClient.disconnectServerByName(payload.name);
+    mcpConfig.removeServer(payload.name);
+    return { success: true };
+  });
+
+  ipcMain.handle("enable-mcp-server", async (_event, payload: { name: string }) => {
+    mcpConfig.setServerEnabled(payload.name, true);
+    try {
+      await mcpClient.connectServerByName(payload.name);
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+    return { success: true };
+  });
+
+  ipcMain.handle("disable-mcp-server", async (_event, payload: { name: string }) => {
+    mcpConfig.setServerEnabled(payload.name, false);
+    await mcpClient.disconnectServerByName(payload.name);
+    return { success: true };
+  });
+
+  ipcMain.handle("get-mcp-tools", () => ({
+    success: true,
+    tools: mcpClient.getMcpToolList(),
+  }));
+
+  // Connect every enabled server and report the result. Called after the user
+  // saves the config so freshly added servers come online immediately.
+  ipcMain.handle("connect-enabled-mcp-servers", async () => {
+    const names = await mcpClient.connectEnabledServers();
+    return { success: true, connected: names };
   });
 
   // ===== Hub IPC =====

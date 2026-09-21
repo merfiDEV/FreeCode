@@ -42,6 +42,18 @@ let statusIconEl: HTMLElement | null = null;
 let providerHeadingEl: HTMLElement | null = null;
 let providerSelect: HTMLSelectElement | null = null;
 
+// MCP
+let mcpHeadingEl: HTMLElement | null = null;
+let mcpAddBtn: HTMLButtonElement | null = null;
+let mcpListEl: HTMLElement | null = null;
+let mcpModal: HTMLElement | null = null;
+let mcpTitleEl: HTMLElement | null = null;
+let mcpModalListEl: HTMLElement | null = null;
+let mcpJsonEl: HTMLTextAreaElement | null = null;
+let mcpSaveBtn: HTMLButtonElement | null = null;
+let mcpCloseBtn: HTMLButtonElement | null = null;
+let mcpConfiguredLabel: HTMLElement | null = null;
+
 let projectDirCache: string | null = null;
 let lastResult: { ok: boolean; text: string } | null = null;
 
@@ -398,6 +410,81 @@ const STYLE = `
 }
 #freecode-overlay .fc-status-text.fc-err { color: var(--fc-err-text); }
 
+#freecode-overlay .fc-mcp-list {
+  display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px;
+}
+#freecode-overlay .fc-mcp-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 5px 9px; border-radius: 8px;
+  background: var(--fc-input-bg); border: 1px solid var(--fc-border);
+  font-size: 12px;
+}
+#freecode-overlay .fc-mcp-name {
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  color: var(--fc-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+#freecode-overlay .fc-mcp-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+#freecode-overlay .fc-mcp-empty { font-size: 11px; font-style: italic; color: var(--fc-muted-text); }
+#freecode-overlay .fc-mcp-headrow {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;
+}
+#freecode-overlay .fc-link-btn {
+  background: none; border: none; color: var(--fc-link); cursor: pointer;
+  font: inherit; font-size: 12px; font-weight: 600; padding: 2px 6px; border-radius: 6px;
+}
+#freecode-overlay .fc-link-btn:hover { background: rgba(77, 174, 132, 0.12); color: var(--fc-link-hover); }
+
+/* MCP modal */
+#freecode-mcp-modal {
+  position: fixed; inset: 0; z-index: 2147483647;
+  background: rgba(4, 15, 10, 0.75);
+  display: flex; align-items: center; justify-content: center;
+}
+#freecode-mcp-modal.fc-hidden { display: none !important; }
+.fc-mcp-box {
+  width: 680px; max-width: 92vw; max-height: 86vh;
+  background: var(--fc-panel-bg); border: 1px solid var(--fc-border-bright);
+  border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px;
+  font-family: 'Roboto', 'Inter', system-ui, sans-serif; font-size: 13px;
+  color: var(--fc-text); box-shadow: 0 30px 60px -15px rgba(0,0,0,0.8);
+}
+.fc-mcp-box.fc-dark {
+  --fc-panel-bg: #0e2018; --fc-border: #234a3b; --fc-border-bright: #2f5c49;
+  --fc-text: #cfe9dc; --fc-heading: #d7f5e7; --fc-muted-text: #8dbfa9;
+  --fc-input-bg: #10281f; --fc-input-border: #2c5a48; --fc-input-text: #e6fff4;
+  --fc-code-bg: #0a1a13; --fc-code-text: #98f4cc; --fc-link: #7fe3b3; --fc-link-hover: #a8f5d0;
+  --fc-btn-bg: #1f5c44; --fc-btn-border: #2c7357; --fc-btn-hover: #27694e; --fc-btn-text: #e6fff4;
+}
+.fc-mcp-header { display: flex; align-items: center; justify-content: space-between; }
+.fc-mcp-title { font-size: 16px; font-weight: 700; color: var(--fc-heading); }
+.fc-mcp-body { display: flex; gap: 14px; flex: 1; min-height: 0; }
+.fc-mcp-left { width: 200px; flex-shrink: 0; display: flex; flex-direction: column; }
+.fc-mcp-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--fc-muted-text); margin-bottom: 6px;
+}
+.fc-mcp-servers { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.fc-mcp-right { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.fc-mcp-json {
+  flex: 1; min-height: 300px; resize: vertical;
+  background: var(--fc-code-bg); border: 1px solid var(--fc-input-border);
+  border-radius: 10px; padding: 10px;
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  font-size: 11px; line-height: 1.5; color: var(--fc-code-text);
+  outline: none; white-space: pre; overflow: auto;
+}
+.fc-mcp-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.fc-mcp-btn {
+  height: 34px; padding: 0 16px; border-radius: 10px; cursor: pointer;
+  font: inherit; font-size: 12.5px; font-weight: 600;
+  border: 1px solid var(--fc-btn-border); background: var(--fc-btn-bg); color: var(--fc-btn-text);
+}
+.fc-mcp-btn:hover { background: var(--fc-btn-hover); }
+.fc-mcp-btn.secondary {
+  background: transparent; border-color: var(--fc-border-bright); color: var(--fc-text);
+}
+.fc-mcp-btn.secondary:hover { border-color: var(--fc-link); color: var(--fc-link); }
+
 #freecode-overlay .fc-muted { opacity: 0.6; }
 #freecode-overlay .fc-hidden { display: none !important; }
 
@@ -510,6 +597,7 @@ function isDarkPage(): boolean {
 /** Mirror the page theme onto the overlay panel. */
 function applyTheme(): void {
   panel?.classList.toggle("fc-dark", isDarkPage());
+  applyThemeToModal();
 }
 
 /** Keep the overlay theme in sync with the page. */
@@ -542,6 +630,13 @@ function langBadge(): string {
 /** Re-apply all translated strings to the existing DOM. */
 function applyTranslations(): void {
   if (providerHeadingEl) providerHeadingEl.textContent = t("overlay.provider.heading");
+  if (mcpHeadingEl) mcpHeadingEl.textContent = t("overlay.mcp.heading");
+  if (mcpAddBtn) mcpAddBtn.textContent = t("overlay.mcp.add");
+  if (mcpTitleEl) mcpTitleEl.textContent = t("overlay.mcp.title");
+  if (mcpConfiguredLabel) mcpConfiguredLabel.textContent = t("overlay.mcp.configured");
+  if (mcpSaveBtn) mcpSaveBtn.textContent = t("overlay.mcp.save");
+  if (mcpCloseBtn) mcpCloseBtn.textContent = t("overlay.mcp.close");
+  if (mcpJsonEl && !mcpJsonEl.value.trim()) mcpJsonEl.placeholder = t("overlay.mcp.placeholder");
   if (projectHeadingEl) projectHeadingEl.textContent = t("overlay.project.heading");
   if (changeBtn && !changeBtn.disabled) changeBtn.textContent = t("overlay.project.change");
   if (projectDirEl) projectDirEl.textContent = projectDirCache ?? t("overlay.project.none");
@@ -618,6 +713,235 @@ async function handleSwitchProvider(): Promise<void> {
   } catch (err) {
     console.error("[freecode] failed to switch provider:", err);
   }
+}
+
+// ===== MCP =====
+
+interface McpServerStatus {
+  name: string;
+  type: string;
+  enabled: boolean;
+  connected: boolean;
+  toolCount: number;
+}
+
+function mcpStatusLabel(s: McpServerStatus): string {
+  if (!s.enabled) return t("overlay.mcp.status.disabled");
+  return s.connected ? t("overlay.mcp.status.connected") : t("overlay.mcp.status.pending");
+}
+
+function mcpStatusColor(s: McpServerStatus): string {
+  if (!s.enabled) return "#6a9a86";
+  return s.connected ? "#4ade80" : "#e6be44";
+}
+
+function showToast(text: string): void {
+  const toast = document.getElementById("freecode-toast");
+  if (!toast) return;
+  toast.textContent = text;
+  toast.classList.remove("fc-hidden");
+  setTimeout(() => toast?.classList.add("fc-hidden"), 2500);
+}
+
+/** Render the compact server list shown in the panel. */
+async function renderMcpList(): Promise<void> {
+  if (!mcpListEl) return;
+  try {
+    const res = await ipc.listMcpServers();
+    const servers = res.servers ?? [];
+    mcpListEl.innerHTML = "";
+    if (servers.length === 0) {
+      mcpListEl.appendChild(el("div", "fc-mcp-empty", t("overlay.mcp.empty")));
+      return;
+    }
+    for (const s of servers) {
+      const item = el("div", "fc-mcp-item");
+      item.appendChild(el("span", "fc-mcp-name", s.name));
+      const dot = el("span", "fc-mcp-dot");
+      dot.style.background = mcpStatusColor(s);
+      dot.title = mcpStatusLabel(s);
+      item.appendChild(dot);
+      item.addEventListener("click", () => void toggleMcpServer(s));
+      mcpListEl.appendChild(item);
+    }
+  } catch {
+    mcpListEl.innerHTML = "";
+    mcpListEl.appendChild(el("div", "fc-mcp-empty", "Error"));
+  }
+}
+
+/**
+ * Enable/disable a server by clicking its row.
+ *
+ * The primary signal is `connected`, not `enabled`: a freshly added server is
+ * enabled by default but has not been dialled yet, so the first click must
+ * connect it rather than switch it off.
+ */
+async function toggleMcpServer(s: McpServerStatus): Promise<void> {
+  try {
+    if (s.connected) {
+      await ipc.disableMcpServer(s.name);
+      showToast(s.name + " — " + t("overlay.mcp.status.disabled"));
+    } else {
+      showToast(t("overlay.mcp.connecting", { name: s.name }));
+      const r = await ipc.enableMcpServer(s.name);
+      if (!r.success) {
+        showToast(t("overlay.mcp.serverError", { name: s.name, msg: r.error ?? "" }));
+      } else {
+        const after = await ipc.listMcpServers();
+        const fresh = (after.servers ?? []).find((x) => x.name === s.name);
+        showToast(t("overlay.mcp.connected", { name: s.name, n: fresh?.toolCount ?? 0 }));
+      }
+    }
+  } catch (err) {
+    showToast(String(err));
+  }
+  await renderMcpList();
+  if (mcpModal && !mcpModal.classList.contains("fc-hidden")) {
+    await renderMcpModalList();
+    await loadMcpConfigToJson();
+  }
+}
+
+/** Render the server list inside the modal (same data, larger rows). */
+async function renderMcpModalList(): Promise<void> {
+  if (!mcpModalListEl) return;
+  try {
+    const res = await ipc.listMcpServers();
+    const servers = res.servers ?? [];
+    mcpModalListEl.innerHTML = "";
+    if (servers.length === 0) {
+      mcpModalListEl.appendChild(el("div", "fc-mcp-empty", t("overlay.mcp.empty")));
+      return;
+    }
+    for (const s of servers) {
+      const item = el("div", "fc-mcp-item");
+      item.appendChild(el("span", "fc-mcp-name", s.name));
+      const dot = el("span", "fc-mcp-dot");
+      dot.style.background = mcpStatusColor(s);
+      dot.title = mcpStatusLabel(s);
+      item.appendChild(dot);
+      item.addEventListener("click", () => void toggleMcpServer(s));
+      mcpModalListEl.appendChild(item);
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Load the current config into the modal's JSON editor. */
+async function loadMcpConfigToJson(): Promise<void> {
+  if (!mcpJsonEl) return;
+  try {
+    const res = await ipc.listMcpServers();
+    const servers = res.config ?? [];
+    const mcpServers: Record<string, unknown> = {};
+    for (const s of servers) {
+      const def: Record<string, unknown> = {};
+      if (s.type === "http") {
+        if (s.url) def.url = s.url;
+        if (s.headers) def.headers = s.headers;
+      } else {
+        if (s.command) def.command = s.command;
+        if (s.args && s.args.length) def.args = s.args;
+        if (s.env) def.env = s.env;
+      }
+      mcpServers[s.name] = def;
+    }
+    mcpJsonEl.value = JSON.stringify({ mcpServers }, null, 2);
+  } catch {
+    /* keep current text */
+  }
+}
+
+/** Validate and persist the JSON editor contents. */
+async function saveMcpConfig(): Promise<void> {
+  if (!mcpJsonEl) return;
+  const raw = mcpJsonEl.value.trim();
+  if (!raw) return;
+
+  let parsed: { mcpServers?: Record<string, Record<string, unknown>> };
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    showToast(t("overlay.mcp.invalidJson"));
+    return;
+  }
+  if (!parsed.mcpServers || typeof parsed.mcpServers !== "object") {
+    showToast(t("overlay.mcp.needServers"));
+    return;
+  }
+
+  // Validate every server before touching the stored config.
+  for (const [name, def] of Object.entries(parsed.mcpServers)) {
+    if (!def || typeof def !== "object" || Array.isArray(def)) {
+      showToast(t("overlay.mcp.serverError", { name, msg: "definition must be an object" }));
+      return;
+    }
+    const hasUrl = def.url !== undefined;
+    const hasCommand = def.command !== undefined;
+    if (hasUrl && hasCommand) {
+      showToast(t("overlay.mcp.serverError", { name, msg: "cannot set both url and command" }));
+      return;
+    }
+    if (!hasUrl && !hasCommand) {
+      showToast(t("overlay.mcp.serverError", { name, msg: "missing command or url" }));
+      return;
+    }
+    if (def.args !== undefined && !Array.isArray(def.args)) {
+      showToast(t("overlay.mcp.serverError", { name, msg: "args must be an array" }));
+      return;
+    }
+  }
+
+  // Remove servers that are gone, then upsert the rest.
+  const existing = await ipc.listMcpServers();
+  const newNames = new Set(Object.keys(parsed.mcpServers));
+  for (const s of existing.servers ?? []) {
+    if (!newNames.has(s.name)) await ipc.removeMcpServer(s.name);
+  }
+  for (const [name, def] of Object.entries(parsed.mcpServers)) {
+    await ipc.upsertMcpServer({
+      name,
+      type: def.url ? "http" : "stdio",
+      command: def.command as string | undefined,
+      args: (def.args as string[]) || [],
+      url: def.url as string | undefined,
+      headers: def.headers as Record<string, string> | undefined,
+      env: def.env as Record<string, string> | undefined,
+    });
+  }
+
+  showToast(t("overlay.mcp.saved"));
+
+  // Bring the just-saved servers online so their tools are available without
+  // an extra click.
+  try {
+    await ipc.connectEnabledMcpServers();
+  } catch (err) {
+    console.warn("[freecode][mcp] auto-connect failed:", (err as Error).message);
+  }
+
+  await renderMcpList();
+  await renderMcpModalList();
+  await loadMcpConfigToJson();
+}
+
+function openMcpModal(): void {
+  if (!mcpModal) return;
+  mcpModal.classList.remove("fc-hidden");
+  applyThemeToModal();
+  void renderMcpModalList();
+  void loadMcpConfigToJson();
+}
+
+function closeMcpModal(): void {
+  mcpModal?.classList.add("fc-hidden");
+}
+
+function applyThemeToModal(): void {
+  const dark = isDarkPage();
+  mcpModal?.querySelector(".fc-mcp-box")?.classList.toggle("fc-dark", dark);
 }
 
 // ===== Project directory =====
@@ -760,6 +1084,19 @@ export function injectOverlay(): void {
   providerSection.append(providerHeadingEl, providerSelect);
   const providerSep = el("hr", "fc-divider");
 
+  // --- MCP section ---
+  const mcpSection = el("section", "fc-section");
+  const mcpHeadRow = el("div", "fc-mcp-headrow");
+  mcpHeadingEl = el("h2", "fc-heading", t("overlay.mcp.heading"));
+  mcpAddBtn = el("button", "fc-link-btn", t("overlay.mcp.add"));
+  mcpAddBtn.type = "button";
+  mcpAddBtn.addEventListener("click", () => openMcpModal());
+  mcpHeadRow.append(mcpHeadingEl, mcpAddBtn);
+  mcpSection.appendChild(mcpHeadRow);
+  mcpListEl = el("div", "fc-mcp-list");
+  mcpSection.appendChild(mcpListEl);
+  const mcpSep = el("hr", "fc-divider");
+
   // --- Directory section ---
   const dirSection = el("section", "fc-section");
 
@@ -852,6 +1189,8 @@ export function injectOverlay(): void {
   root.append(
     providerSection,
     providerSep,
+    mcpSection,
+    mcpSep,
     dirSection,
     delaySep,
     delaySection,
@@ -885,6 +1224,55 @@ export function injectOverlay(): void {
   toggleBtn.addEventListener("click", () => setCollapsed(false));
   document.body.appendChild(toggleBtn);
 
+  // --- MCP modal ---
+  mcpModal = el("div");
+  mcpModal.id = "freecode-mcp-modal";
+  mcpModal.classList.add("fc-hidden");
+  mcpModal.addEventListener("click", (e) => {
+    if (e.target === mcpModal) closeMcpModal();
+  });
+
+  const mcpBox = el("div", "fc-mcp-box");
+  const mcpHeader = el("div", "fc-mcp-header");
+  mcpTitleEl = el("div", "fc-mcp-title", t("overlay.mcp.title"));
+  mcpCloseBtn = el("button", "fc-link-btn", t("overlay.mcp.close"));
+  mcpCloseBtn.type = "button";
+  mcpCloseBtn.addEventListener("click", () => closeMcpModal());
+  mcpHeader.append(mcpTitleEl, mcpCloseBtn);
+
+  const mcpBody = el("div", "fc-mcp-body");
+  const mcpLeft = el("div", "fc-mcp-left");
+  mcpConfiguredLabel = el("div", "fc-mcp-label", t("overlay.mcp.configured"));
+  mcpModalListEl = el("div", "fc-mcp-servers");
+  mcpLeft.append(mcpConfiguredLabel, mcpModalListEl);
+
+  const mcpRight = el("div", "fc-mcp-right");
+  mcpJsonEl = el("textarea", "fc-mcp-json");
+  mcpJsonEl.placeholder = t("overlay.mcp.placeholder");
+  mcpJsonEl.spellcheck = false;
+  const mcpActions = el("div", "fc-mcp-actions");
+  mcpSaveBtn = el("button", "fc-mcp-btn", t("overlay.mcp.save"));
+  mcpSaveBtn.type = "button";
+  mcpSaveBtn.addEventListener("click", () => void saveMcpConfig());
+  mcpActions.appendChild(mcpSaveBtn);
+  mcpRight.append(mcpJsonEl, mcpActions);
+
+  mcpBody.append(mcpLeft, mcpRight);
+  mcpBox.append(mcpHeader, mcpBody);
+  mcpModal.appendChild(mcpBox);
+  document.body.appendChild(mcpModal);
+
+  // --- Toast ---
+  const toast = el("div");
+  toast.id = "freecode-toast";
+  toast.className = "fc-hidden";
+  toast.style.cssText =
+    "position:fixed;bottom:16px;left:16px;z-index:2147483647;max-width:320px;" +
+    "background:rgba(16,107,71,0.95);color:#e6fff4;padding:8px 14px;" +
+    "border-radius:12px;font-size:12px;font-weight:500;line-height:1.4;" +
+    "box-shadow:0 10px 25px rgba(0,0,0,0.5);font-family:'Roboto',system-ui,sans-serif;";
+  document.body.appendChild(toast);
+
   // Match the page theme now and on every change.
   applyTheme();
   watchTheme();
@@ -894,9 +1282,15 @@ export function injectOverlay(): void {
   ipc.onProjectContextChanged(() => {
     resetTaskPanels();
     void refreshProjectDir();
+    void renderMcpList();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeMcpModal();
   });
 
   void loadProviders();
+  void renderMcpList();
   void refreshProjectDir();
   void loadDelay();
 }

@@ -25,19 +25,66 @@ interface Connection {
 /** server name -> connection */
 const connections = new Map<string, Connection>();
 
+/**
+ * On Windows many MCP commands are shell shims (npx.cmd, npm.cmd, uvx, …) that
+ * `spawn` cannot launch directly — it fails with ENOENT and the transport then
+ * reports "Connection closed" (MCP error -32000). Wrapping the command in
+ * `cmd /c` lets the shell resolve the shim while keeping arguments untouched.
+ *
+ * On other platforms the command is returned as-is.
+ */
+function normalizeStdioCommand(
+  command: string,
+  args: string[],
+): { command: string; args: string[] } {
+  if (process.platform !== "win32") return { command, args };
+  const lower = command.toLowerCase();
+  const isShellShim =
+    lower === "npx" ||
+    lower === "npx.cmd" ||
+    lower === "npm" ||
+    lower === "npm.cmd" ||
+    lower === "pnpm" ||
+    lower === "yarn" ||
+    lower === "uvx" ||
+    lower === "uvx.exe" ||
+    lower === "bunx" ||
+    lower.endsWith(".cmd") ||
+    lower.endsWith(".bat");
+  if (!isShellShim) return { command, args };
+  return { command: "cmd", args: ["/c", command, ...args] };
+}
+
 async function connectServer(server: McpServer): Promise<Connection> {
   const existing = connections.get(server.name);
   if (existing) return existing;
 
   let transport;
   if (server.type === "stdio") {
+    const { command, args } = normalizeStdioCommand(server.command ?? "", server.args ?? []);
+    console.log(
+      "[freecode][mcp] connecting:",
+      server.name,
+      "| command:", command,
+      "| args:", JSON.stringify(args),
+    );
     transport = new StdioClientTransport({
-      command: server.command ?? "",
-      args: server.args ?? [],
-      env: server.env ?? {},
+      command,
+      args,
+      // Inherit the parent environment so PATH (and the npx shim) is visible.
+      env: { ...process.env, ...(server.env ?? {}) } as Record<string, string>,
       cwd: server.cwd,
       stderr: "pipe",
     });
+    // Surface the server's own stderr so a bad flag or missing package is
+    // visible in the app log instead of a bare "Connection closed".
+    const stderrStream = transport.stderr;
+    if (stderrStream) {
+      stderrStream.on("data", (chunk: Buffer) => {
+        const text = chunk.toString().trim();
+        if (text) console.error("[freecode][mcp:" + server.name + "] " + text);
+      });
+    }
   } else if (server.type === "http") {
     transport = new StreamableHTTPClientTransport(new URL(server.url ?? ""), {
       requestInit: server.headers ? { headers: server.headers } : undefined,
@@ -47,7 +94,12 @@ async function connectServer(server: McpServer): Promise<Connection> {
   }
 
   const client = new Client({ name: "freecode", version: "0.1.6" });
-  await client.connect(transport);
+  try {
+    await client.connect(transport);
+  } catch (err) {
+    console.error("[freecode][mcp] connect failed:", server.name, (err as Error).message);
+    throw err;
+  }
 
   let tools: McpToolInfo[] = [];
   try {
