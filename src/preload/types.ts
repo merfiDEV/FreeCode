@@ -29,6 +29,25 @@ export interface McpServerDef {
   env?: Record<string, string>;
 }
 
+export type TodoStatus = "pending" | "in_progress" | "completed";
+
+export interface TodoTask {
+  id: string;
+  content: string;
+  status: TodoStatus;
+}
+
+export interface QuestionOption {
+  label: string;
+  description: string;
+  recommended: boolean;
+}
+
+export interface AskQuestion {
+  question: string;
+  options: QuestionOption[];
+}
+
 export interface ElectronAPI {
   executeJs(code: string): Promise<{ ok: boolean; digest: string; logs: string[]; error: string | null }>;
   initProject(): Promise<{ canceled: boolean; projectDir: string | null; prompt: string; error?: string }>;
@@ -48,6 +67,18 @@ export interface ElectronAPI {
   disableMcpServer(name: string): Promise<{ success: boolean }>;
   getMcpTools(): Promise<{ success: boolean; tools: Array<{ server: string; name: string; description: string }> }>;
   connectEnabledMcpServers(): Promise<{ success: boolean; connected: string[] }>;
+
+  // ===== Tasks =====
+  getTodos(): Promise<TodoTask[]>;
+  /** Subscribe to todo-list changes. Returns an unsubscribe fn. */
+  onTodosChanged(cb: (todos: TodoTask[]) => void): () => void;
+
+  // ===== Questions =====
+  /** Subscribe to askUserQuestion requests. Returns an unsubscribe fn. */
+  onAskUserQuestion(cb: (payload: { requestId: string; questions: AskQuestion[] }) => void): () => void;
+  /** Send the user's answers back to the waiting tool call. */
+  answerUserQuestion(requestId: string, answers: unknown): void;
+
   /** Subscribe to project-context changes (session switch). Returns an unsubscribe fn. */
   onProjectContextChanged(cb: () => void): () => void;
 }

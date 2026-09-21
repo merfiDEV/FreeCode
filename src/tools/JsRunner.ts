@@ -1,6 +1,7 @@
 import * as vm from "vm";
 import { ToolRegistry } from "./ToolRegistry";
 import { asObject } from "./types";
+import type { ToolContext } from "./types";
 import { OUTPUT_LIMIT, TIMEOUTS } from "../shared/constants";
 
 export interface JsRunResult {
@@ -22,19 +23,19 @@ export interface JsRunResult {
 export class JsRunner {
   constructor(private readonly registry: ToolRegistry) {}
 
-  async run(code: string, projectDir: string | null): Promise<JsRunResult> {
+  async run(code: string, ctx: ToolContext): Promise<JsRunResult> {
     const logs: string[] = [];
 
     const callTool = async (toolName: string, params: Record<string, unknown>): Promise<unknown> => {
       const def = this.registry.get(toolName);
       if (!def) throw new Error("Unknown tool: " + toolName);
-      const result = await def.execute(params, { projectDir });
+      const result = await def.execute(params, ctx);
       if (!result.success) throw new Error(result.error ?? ("Tool " + toolName + " failed"));
       return result.data;
     };
 
     const sandbox: Record<string, unknown> = {
-      projectDir,
+      projectDir: ctx.projectDir,
       log: (...args: unknown[]) => {
         logs.push(args.map(stringify).join(" "));
       },

@@ -4,6 +4,12 @@ import type { ToolResult } from "../shared/types";
 export interface ToolContext {
   /** Project root the AI has been given; relative paths resolve here. */
   projectDir: string | null;
+  /** webContents id of the window that triggered the call (for per-window state). */
+  senderId?: number;
+  /** Ask the user a question (wired by the main process). */
+  askUserQuestion?: (questions: unknown) => Promise<unknown>;
+  /** webContents of the main chat window, for injectPageJS. */
+  mainWebContents?: Electron.WebContents;
 }
 
 export interface ToolDefinition<P = Record<string, unknown>> {

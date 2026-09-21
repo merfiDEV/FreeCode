@@ -3,7 +3,7 @@
  * Preload code calls these directly — no contextBridge round-trip needed.
  */
 import { ipcRenderer } from "electron";
-import type { ElectronAPI, Settings, McpServerDef } from "./types";
+import type { ElectronAPI, Settings, McpServerDef, TodoTask, AskQuestion } from "./types";
 
 export const ipc: ElectronAPI = {
   executeJs: (code: string) => ipcRenderer.invoke("execute-js", { code }),
@@ -23,6 +23,24 @@ export const ipc: ElectronAPI = {
   disableMcpServer: (name: string) => ipcRenderer.invoke("disable-mcp-server", { name }),
   getMcpTools: () => ipcRenderer.invoke("get-mcp-tools"),
   connectEnabledMcpServers: () => ipcRenderer.invoke("connect-enabled-mcp-servers"),
+
+  // ===== Tasks =====
+  getTodos: () => ipcRenderer.invoke("get-todos"),
+  onTodosChanged: (cb: (todos: TodoTask[]) => void) => {
+    const listener = (_e: unknown, todos: TodoTask[]): void => cb(todos);
+    ipcRenderer.on("todos-changed", listener);
+    return () => ipcRenderer.removeListener("todos-changed", listener);
+  },
+
+  // ===== Questions =====
+  onAskUserQuestion: (cb: (payload: { requestId: string; questions: AskQuestion[] }) => void) => {
+    const listener = (_e: unknown, payload: { requestId: string; questions: AskQuestion[] }): void => cb(payload);
+    ipcRenderer.on("ask-user-question", listener);
+    return () => ipcRenderer.removeListener("ask-user-question", listener);
+  },
+  answerUserQuestion: (requestId: string, answers: unknown) => {
+    ipcRenderer.send("ask-user-question-response", { requestId, answers });
+  },
 
   onProjectContextChanged: (cb: () => void) => {
     const listener = (): void => cb();

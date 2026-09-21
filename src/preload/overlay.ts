@@ -9,6 +9,7 @@ import { ipc } from "./ipc";
 import { iconDataUri } from "./icon";
 import { getProviderByUrl } from "../providers";
 import { t, setLanguage, detectLanguage, getLanguage, type Language } from "./i18n";
+import type { TodoTask } from "./types";
 
 let panel: HTMLElement | null = null;
 let toggleBtn: HTMLButtonElement | null = null;
@@ -53,6 +54,22 @@ let mcpJsonEl: HTMLTextAreaElement | null = null;
 let mcpSaveBtn: HTMLButtonElement | null = null;
 let mcpCloseBtn: HTMLButtonElement | null = null;
 let mcpConfiguredLabel: HTMLElement | null = null;
+
+// Todos
+let todoHeadingEl: HTMLElement | null = null;
+let todoListEl: HTMLElement | null = null;
+let todoSectionEl: HTMLElement | null = null;
+let todoSepEl: HTMLElement | null = null;
+
+// Ask-user-question
+let askModal: HTMLElement | null = null;
+let askTitleEl: HTMLElement | null = null;
+let askBodyEl: HTMLElement | null = null;
+let askSubmitBtn: HTMLButtonElement | null = null;
+let askState: { requestId: string; questions: AskQuestion[] } | null = null;
+
+interface AskOption { label: string; description: string; recommended: boolean; }
+interface AskQuestion { question: string; options: AskOption[]; }
 
 let projectDirCache: string | null = null;
 let lastResult: { ok: boolean; text: string } | null = null;
@@ -485,6 +502,99 @@ const STYLE = `
 }
 .fc-mcp-btn.secondary:hover { border-color: var(--fc-link); color: var(--fc-link); }
 
+/* Todo list */
+#freecode-overlay .fc-todo-list {
+  display: flex; flex-direction: column; gap: 4px;
+}
+#freecode-overlay .fc-todo-item {
+  display: flex; align-items: flex-start; gap: 7px;
+  padding: 5px 9px; border-radius: 8px;
+  background: var(--fc-input-bg); border: 1px solid var(--fc-border);
+  font-size: 12px; line-height: 1.35;
+}
+#freecode-overlay .fc-todo-mark {
+  flex-shrink: 0; width: 14px; height: 14px; border-radius: 4px;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-top: 1px;
+}
+#freecode-overlay .fc-todo-mark.fc-todo-pending { border: 1.5px solid var(--fc-muted-text); }
+#freecode-overlay .fc-todo-mark.fc-todo-in_progress {
+  border: 1.5px solid var(--fc-link);
+  background: rgba(127, 227, 179, 0.18);
+}
+#freecode-overlay .fc-todo-mark.fc-todo-in_progress::after {
+  content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--fc-link);
+}
+#freecode-overlay .fc-todo-mark.fc-todo-completed {
+  background: var(--fc-ok-bg); color: #fff;
+}
+#freecode-overlay .fc-todo-mark.fc-todo-completed::after {
+  content: "✓"; font-size: 10px; line-height: 1; color: #fff;
+}
+#freecode-overlay .fc-todo-text { flex: 1; word-break: break-word; }
+#freecode-overlay .fc-todo-item.fc-todo-done .fc-todo-text {
+  opacity: 0.55; text-decoration: line-through;
+}
+#freecode-overlay .fc-todo-empty {
+  font-size: 11px; font-style: italic; color: var(--fc-muted-text);
+}
+
+/* Ask-user-question modal */
+#freecode-ask-modal {
+  position: fixed; inset: 0; z-index: 2147483647;
+  background: rgba(4, 15, 10, 0.78);
+  display: flex; align-items: center; justify-content: center;
+}
+#freecode-ask-modal.fc-hidden { display: none !important; }
+.fc-ask-box {
+  width: 520px; max-width: 92vw; max-height: 86vh; overflow-y: auto;
+  background: var(--fc-panel-bg); border: 1px solid var(--fc-border-bright);
+  border-radius: 16px; padding: 20px;
+  font-family: 'Roboto', 'Inter', system-ui, sans-serif; font-size: 13px;
+  color: var(--fc-text); box-shadow: 0 30px 60px -15px rgba(0,0,0,0.8);
+  display: flex; flex-direction: column; gap: 16px;
+}
+.fc-ask-box.fc-dark {
+  --fc-panel-bg: #0e2018; --fc-border: #234a3b; --fc-border-bright: #2f5c49;
+  --fc-text: #cfe9dc; --fc-heading: #d7f5e7; --fc-muted-text: #8dbfa9;
+  --fc-input-bg: #10281f; --fc-input-border: #2c5a48; --fc-input-text: #e6fff4;
+  --fc-link: #7fe3b3; --fc-btn-bg: #1f5c44; --fc-btn-border: #2c7357;
+  --fc-btn-hover: #27694e; --fc-btn-text: #e6fff4;
+}
+.fc-ask-title { font-size: 16px; font-weight: 700; color: var(--fc-heading); }
+.fc-ask-q { display: flex; flex-direction: column; gap: 8px; }
+.fc-ask-qtext { font-weight: 600; color: var(--fc-heading); }
+.fc-ask-opt {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 10px; border-radius: 10px;
+  border: 1px solid var(--fc-border); background: var(--fc-input-bg);
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+}
+.fc-ask-opt:hover { border-color: var(--fc-border-bright); }
+.fc-ask-opt.fc-selected { border-color: var(--fc-link); background: rgba(127, 227, 179, 0.1); }
+.fc-ask-opt input { margin-top: 2px; accent-color: var(--fc-link); }
+.fc-ask-opt-body { display: flex; flex-direction: column; gap: 2px; }
+.fc-ask-opt-label { font-weight: 500; color: var(--fc-text); }
+.fc-ask-opt-desc { font-size: 11.5px; color: var(--fc-muted-text); }
+.fc-ask-opt-rec {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  color: var(--fc-link); letter-spacing: 0.04em;
+}
+.fc-ask-custom {
+  width: 100%; box-sizing: border-box; margin-top: 4px;
+  background: var(--fc-input-bg); border: 1px solid var(--fc-input-border);
+  border-radius: 8px; padding: 6px 9px; color: var(--fc-input-text);
+  font: inherit; font-size: 12px; outline: none;
+}
+.fc-ask-custom:focus { border-color: var(--fc-link); }
+.fc-ask-actions { display: flex; justify-content: flex-end; }
+.fc-ask-submit {
+  height: 36px; padding: 0 20px; border-radius: 10px; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 600;
+  border: 1px solid var(--fc-btn-border); background: var(--fc-btn-bg); color: var(--fc-btn-text);
+}
+.fc-ask-submit:hover { background: var(--fc-btn-hover); }
+
 #freecode-overlay .fc-muted { opacity: 0.6; }
 #freecode-overlay .fc-hidden { display: none !important; }
 
@@ -598,6 +708,7 @@ function isDarkPage(): boolean {
 function applyTheme(): void {
   panel?.classList.toggle("fc-dark", isDarkPage());
   applyThemeToModal();
+  applyThemeToAskModal();
 }
 
 /** Keep the overlay theme in sync with the page. */
@@ -637,6 +748,9 @@ function applyTranslations(): void {
   if (mcpSaveBtn) mcpSaveBtn.textContent = t("overlay.mcp.save");
   if (mcpCloseBtn) mcpCloseBtn.textContent = t("overlay.mcp.close");
   if (mcpJsonEl && !mcpJsonEl.value.trim()) mcpJsonEl.placeholder = t("overlay.mcp.placeholder");
+  if (todoHeadingEl) todoHeadingEl.textContent = t("overlay.todo.heading");
+  if (askTitleEl) askTitleEl.textContent = t("overlay.ask.title");
+  if (askSubmitBtn) askSubmitBtn.textContent = t("overlay.ask.submit");
   if (projectHeadingEl) projectHeadingEl.textContent = t("overlay.project.heading");
   if (changeBtn && !changeBtn.disabled) changeBtn.textContent = t("overlay.project.change");
   if (projectDirEl) projectDirEl.textContent = projectDirCache ?? t("overlay.project.none");
@@ -944,6 +1058,127 @@ function applyThemeToModal(): void {
   mcpModal?.querySelector(".fc-mcp-box")?.classList.toggle("fc-dark", dark);
 }
 
+// ===== Todos =====
+
+function todoStatusLabel(status: string): string {
+  if (status === "pending") return t("overlay.todo.pending");
+  if (status === "in_progress") return t("overlay.todo.in_progress");
+  return t("overlay.todo.completed");
+}
+
+/** Render the task list; hide the whole section when it is empty. */
+function renderTodos(todos: TodoTask[]): void {
+  if (!todoListEl || !todoSectionEl) return;
+
+  if (todos.length === 0) {
+    todoSectionEl.classList.add("fc-hidden");
+    todoSepEl?.classList.add("fc-hidden");
+    return;
+  }
+  todoSectionEl.classList.remove("fc-hidden");
+  todoSepEl?.classList.remove("fc-hidden");
+
+  todoListEl.innerHTML = "";
+  for (const task of todos) {
+    const item = el("div", "fc-todo-item" + (task.status === "completed" ? " fc-todo-done" : ""));
+    item.title = todoStatusLabel(task.status);
+    const mark = el("span", "fc-todo-mark fc-todo-" + task.status);
+    item.append(mark, el("span", "fc-todo-text", task.content));
+    todoListEl.appendChild(item);
+  }
+}
+
+async function loadTodos(): Promise<void> {
+  try {
+    const todos = await ipc.getTodos();
+    renderTodos(todos);
+  } catch {
+    /* ignore */
+  }
+}
+
+// ===== Ask-user-question =====
+
+function closeAskModal(): void {
+  askModal?.classList.add("fc-hidden");
+  askState = null;
+}
+
+/** Render the question form and remember the request id. */
+function openAskModal(payload: { requestId: string; questions: AskQuestion[] }): void {
+  if (!askModal || !askBodyEl) return;
+  askState = payload;
+  applyThemeToAskModal();
+
+  askBodyEl.innerHTML = "";
+  payload.questions.forEach((q, qi) => {
+    const block = el("div", "fc-ask-q");
+    block.appendChild(el("div", "fc-ask-qtext", q.question));
+
+    q.options.forEach((opt, oi) => {
+      const row = el("label", "fc-ask-opt");
+      const radio = el("input");
+      radio.type = "radio";
+      radio.name = "fc-q-" + qi;
+      radio.value = String(oi);
+      row.appendChild(radio);
+
+      const body = el("div", "fc-ask-opt-body");
+      const labelRow = el("div", "fc-ask-opt-label", opt.label);
+      if (opt.recommended) {
+        labelRow.appendChild(el("span", "fc-ask-opt-rec", " · " + t("overlay.ask.recommended")));
+      }
+      body.appendChild(labelRow);
+      if (opt.description) body.appendChild(el("div", "fc-ask-opt-desc", opt.description));
+      row.appendChild(body);
+
+      radio.addEventListener("change", () => {
+        for (const r of Array.from(block.querySelectorAll(".fc-ask-opt"))) r.classList.remove("fc-selected");
+        row.classList.add("fc-selected");
+      });
+      block.appendChild(row);
+    });
+
+    // Free-form answer, always available.
+    const custom = el("input", "fc-ask-custom");
+    custom.type = "text";
+    custom.placeholder = t("overlay.ask.custom");
+    custom.dataset.qIndex = String(qi);
+    block.appendChild(custom);
+
+    askBodyEl.appendChild(block);
+  });
+
+  askModal.classList.remove("fc-hidden");
+}
+
+/** Collect the answers and hand them back to the waiting tool call. */
+function submitAskModal(): void {
+  if (!askState || !askBodyEl) return;
+
+  const body = askBodyEl;
+  const answers: Array<{ question: string; answer: string }> = [];
+  askState.questions.forEach((q, qi) => {
+    const custom = body.querySelector('.fc-ask-custom[data-q-index="' + qi + '"]') as HTMLInputElement | null;
+    const picked = body.querySelector('input[name="fc-q-' + qi + '"]:checked') as HTMLInputElement | null;
+    const customText = custom?.value.trim() ?? "";
+    const answer = customText || (picked ? q.options[Number(picked.value)].label : "");
+    answers.push({ question: q.question, answer });
+  });
+
+  if (answers.some((a) => !a.answer)) {
+    showToast(t("overlay.ask.required"));
+    return;
+  }
+
+  ipc.answerUserQuestion(askState.requestId, answers);
+  closeAskModal();
+}
+
+function applyThemeToAskModal(): void {
+  askModal?.querySelector(".fc-box, .fc-ask-box")?.classList.toggle("fc-dark", isDarkPage());
+}
+
 // ===== Project directory =====
 
 export async function refreshProjectDir(): Promise<void> {
@@ -1183,6 +1418,13 @@ export function injectOverlay(): void {
   resultTextEl = el("div", "fc-result-box", "(no output)");
   resultBox.appendChild(resultTextEl);
 
+  // --- Todo section (hidden until there are tasks) ---
+  todoSepEl = el("hr", "fc-divider fc-hidden");
+  todoSectionEl = el("section", "fc-section fc-hidden");
+  todoHeadingEl = el("h2", "fc-heading", t("overlay.todo.heading"));
+  todoListEl = el("div", "fc-todo-list");
+  todoSectionEl.append(todoHeadingEl, todoListEl);
+
   // Divider between the directory and the delay sections.
   const delaySep = el("hr", "fc-divider");
 
@@ -1194,6 +1436,8 @@ export function injectOverlay(): void {
     dirSection,
     delaySep,
     delaySection,
+    todoSepEl,
+    todoSectionEl,
     taskSep,
     taskBox,
     resultSep,
@@ -1262,6 +1506,27 @@ export function injectOverlay(): void {
   mcpModal.appendChild(mcpBox);
   document.body.appendChild(mcpModal);
 
+  // --- Ask-user-question modal ---
+  askModal = el("div");
+  askModal.id = "freecode-ask-modal";
+  askModal.classList.add("fc-hidden");
+  askModal.addEventListener("click", (e) => {
+    if (e.target === askModal) closeAskModal();
+  });
+
+  const askBox = el("div", "fc-ask-box");
+  askTitleEl = el("div", "fc-ask-title", t("overlay.ask.title"));
+  askBodyEl = el("div");
+  askBodyEl.style.cssText = "display:flex;flex-direction:column;gap:16px;";
+  const askActions = el("div", "fc-ask-actions");
+  askSubmitBtn = el("button", "fc-ask-submit", t("overlay.ask.submit"));
+  askSubmitBtn.type = "button";
+  askSubmitBtn.addEventListener("click", () => submitAskModal());
+  askActions.appendChild(askSubmitBtn);
+  askBox.append(askTitleEl, askBodyEl, askActions);
+  askModal.appendChild(askBox);
+  document.body.appendChild(askModal);
+
   // --- Toast ---
   const toast = el("div");
   toast.id = "freecode-toast";
@@ -1283,14 +1548,22 @@ export function injectOverlay(): void {
     resetTaskPanels();
     void refreshProjectDir();
     void renderMcpList();
+    void loadTodos();
   });
 
+  ipc.onTodosChanged((todos) => renderTodos(todos));
+  ipc.onAskUserQuestion((payload) => openAskModal(payload));
+
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeMcpModal();
+    if (e.key === "Escape") {
+      closeMcpModal();
+      closeAskModal();
+    }
   });
 
   void loadProviders();
   void renderMcpList();
+  void loadTodos();
   void refreshProjectDir();
   void loadDelay();
 }

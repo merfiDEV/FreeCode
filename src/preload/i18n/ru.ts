@@ -48,4 +48,16 @@ export const ru: Record<TranslationKey, string> = {
   "overlay.mcp.connecting": "Подключаю {name}…",
   "overlay.mcp.connected": "{name} — подключён, инструментов: {n}",
   "overlay.mcp.connectFailed": "{name} — не удалось подключиться",
+
+  "overlay.todo.heading": "ЗАДАЧИ",
+  "overlay.todo.empty": "Задач пока нет",
+  "overlay.todo.pending": "ожидает",
+  "overlay.todo.in_progress": "в работе",
+  "overlay.todo.completed": "готово",
+
+  "overlay.ask.title": "Вопрос от агента",
+  "overlay.ask.submit": "Ответить",
+  "overlay.ask.custom": "Свой ответ…",
+  "overlay.ask.required": "Ответьте на все вопросы",
+  "overlay.ask.recommended": "рекомендуется",
 };

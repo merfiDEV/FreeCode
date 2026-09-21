@@ -11,10 +11,33 @@ import { getAllProviderStates, touchProvider } from "./provider-state";
 import { getLastProjectDirForProvider } from "./project-store";
 import * as mcpConfig from "./mcp-config";
 import * as mcpClient from "./mcp-client";
+import * as todoStore from "./todo-store";
 import type { McpServer } from "./mcp-config";
 
 const registry = createDefaultRegistry();
 const jsRunner = new JsRunner(registry);
+
+/**
+ * Pending askUserQuestion requests, keyed by "<webContentsId>:<requestId>".
+ * The renderer resolves them through the "ask-user-question-response" channel.
+ */
+const pendingQuestions = new Map<string, (answers: unknown) => void>();
+let questionCounter = 0;
+
+/** Ask the overlay to render a question form and wait for the answer. */
+function requestUserQuestion(sender: Electron.WebContents, questions: unknown): Promise<unknown> {
+  const requestId = "q_" + Date.now() + "_" + ++questionCounter;
+  const key = sender.id + ":" + requestId;
+  return new Promise((resolve) => {
+    pendingQuestions.set(key, resolve);
+    try {
+      sender.send("ask-user-question", { requestId, questions });
+    } catch {
+      pendingQuestions.delete(key);
+      resolve([]);
+    }
+  });
+}
 
 /** Register every IPC handler used by the preload script and the hub. */
 export function registerIpcHandlers(): void {
@@ -22,8 +45,13 @@ export function registerIpcHandlers(): void {
   ipcMain.handle("get-tool-names", () => registry.list().map((t) => ({ name: t.name, description: t.description })));
 
   ipcMain.handle("execute-js", async (event, payload: { code: string }) => {
-    const projectDir = getProjectDir(event.sender);
-    const result = await jsRunner.run(payload.code, projectDir);
+    const ctx = getContextByWebContents(event.sender);
+    const result = await jsRunner.run(payload.code, {
+      projectDir: getProjectDir(event.sender),
+      senderId: event.sender.id,
+      mainWebContents: ctx?.win.webContents,
+      askUserQuestion: (questions) => requestUserQuestion(event.sender, questions),
+    });
     const digest = jsRunner.formatResult(result);
     return { ok: result.success, digest, logs: result.logs, error: result.error ?? null };
   });
@@ -42,6 +70,25 @@ export function registerIpcHandlers(): void {
         : getProviderByUrl(event.sender.getURL());
     if (provider) markLoggedIn(provider.id);
     return true;
+  });
+
+  // The overlay answers a pending askUserQuestion request.
+  ipcMain.on("ask-user-question-response", (event, payload: { requestId: string; answers: unknown }) => {
+    const key = event.sender.id + ":" + payload.requestId;
+    const resolve = pendingQuestions.get(key);
+    if (resolve) {
+      pendingQuestions.delete(key);
+      resolve(payload.answers);
+    }
+  });
+
+  // Current todo list for the overlay panel.
+  ipcMain.handle("get-todos", (event) => todoStore.getList(event.sender.id));
+
+  // Push todo updates to the window that owns them.
+  todoStore.onChange((senderId, todos) => {
+    const wc = require("electron").webContents.fromId(senderId);
+    if (wc && !wc.isDestroyed()) wc.send("todos-changed", todos);
   });
 
   ipcMain.handle("get-settings", () => readSettings());

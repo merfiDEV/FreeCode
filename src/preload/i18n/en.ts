@@ -46,6 +46,18 @@ export const en = {
   "overlay.mcp.connecting": "Connecting {name}…",
   "overlay.mcp.connected": "{name} — connected, tools: {n}",
   "overlay.mcp.connectFailed": "{name} — connection failed",
+
+  "overlay.todo.heading": "TASKS",
+  "overlay.todo.empty": "No tasks yet",
+  "overlay.todo.pending": "pending",
+  "overlay.todo.in_progress": "in progress",
+  "overlay.todo.completed": "completed",
+
+  "overlay.ask.title": "Question from the agent",
+  "overlay.ask.submit": "Submit",
+  "overlay.ask.custom": "Your own answer…",
+  "overlay.ask.required": "Please answer every question",
+  "overlay.ask.recommended": "recommended",
 } as const;
 
 export type TranslationKey = keyof typeof en;
