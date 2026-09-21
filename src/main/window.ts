@@ -1,6 +1,7 @@
 import { BrowserWindow, shell } from "electron";
 import * as path from "path";
 import { addWindow } from "./window-context";
+import { appIconPath } from "./app-icon";
 import type { Provider } from "../shared/types";
 import { APP } from "../shared/constants";
 
@@ -11,6 +12,7 @@ export function createMainWindow(provider: Provider, startUrl?: string): Browser
     minWidth: 900,
     minHeight: 600,
     title: APP.name,
+    icon: appIconPath(),
     autoHideMenuBar: true,
     backgroundColor: "#0f0f0f",
     webPreferences: {
