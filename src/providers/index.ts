@@ -1,9 +1,10 @@
 import type { Provider } from "../shared/types";
 import { zaiProvider } from "./zai";
 import { deepseekProvider } from "./deepseek";
+import { qwenProvider } from "./qwen";
 
 /** All built-in providers, in the order shown to the user. */
-const builtins: Provider[] = [zaiProvider, deepseekProvider];
+const builtins: Provider[] = [zaiProvider, deepseekProvider, qwenProvider];
 
 export function getAllProviders(): Provider[] {
   return [...builtins];
