@@ -1,5 +1,6 @@
 /**
- * Side overlay panel styled after Material Design 3 (dark).
+ * Side overlay panel styled after Material Design 3 (mint / seafoam).
+ * Adopts a dark palette automatically when the host page is in dark mode.
  * Shows the project directory, send-delay settings, a language switch, a
  * collapse button, and live panels for the current task and its result.
  */
@@ -23,7 +24,6 @@ let saveLinkEl: HTMLButtonElement | null = null;
 let delayStatusEl: HTMLElement | null = null;
 let taskHeadingEl: HTMLElement | null = null;
 let resultHeadingEl: HTMLElement | null = null;
-let resultStatusEl: HTMLElement | null = null;
 let resultStatusTextEl: HTMLElement | null = null;
 
 let delayMinInput: HTMLInputElement | null = null;
@@ -42,6 +42,39 @@ let lastResult: { ok: boolean; text: string } | null = null;
 
 const STYLE = `
 #freecode-overlay {
+  /* Light mint palette (Material Design 3) */
+  --fc-panel-bg: #edf8f3;
+  --fc-panel-border: #a8d9c4;
+  --fc-heading: #0f3829;
+  --fc-text: #0f3829;
+  --fc-muted-text: #265945;
+  --fc-chip-bg: #d2ece0;
+  --fc-chip-border: #9dcfb9;
+  --fc-chip-text: #0f3829;
+  --fc-chip-hover: #bde4d2;
+  --fc-btn-bg: #85cfaf;
+  --fc-btn-border: #70bd9b;
+  --fc-btn-hover: #72c3a1;
+  --fc-btn-text: #0f3829;
+  --fc-path: #0f6844;
+  --fc-divider: #bfe3d3;
+  --fc-input-bg: #f7fcf9;
+  --fc-input-border: #9dcfb9;
+  --fc-input-text: #0f3829;
+  --fc-input-focus: #4dae84;
+  --fc-link: #145d3e;
+  --fc-link-hover: #0a3824;
+  --fc-code-bg: #103023;
+  --fc-code-border: #1e4e3b;
+  --fc-code-text: #c3f2dc;
+  --fc-result-bg: #dcf2e7;
+  --fc-result-border: #add9c5;
+  --fc-result-text: #2b664f;
+  --fc-ok-bg: #106b47;
+  --fc-ok-text: #106b47;
+  --fc-err-bg: #b3261e;
+  --fc-err-text: #b3261e;
+
   position: fixed;
   right: 16px;
   bottom: 16px;
@@ -54,17 +87,54 @@ const STYLE = `
   font-family: 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 13px;
   line-height: 1.4;
-  color: #E6E1E5;
-  background: #1C1924;
-  border: 1px solid rgba(56, 52, 68, 0.5);
+  color: var(--fc-text);
+  background: var(--fc-panel-bg);
+  border: 1px solid var(--fc-panel-border);
   border-radius: 20px;
   padding: 16px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 25px -5px rgba(16, 56, 43, 0.18), 0 8px 10px -6px rgba(16, 56, 43, 0.12);
   display: flex;
   flex-direction: column;
   gap: 14px;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Dark mint palette — applied when the host page is dark. */
+#freecode-overlay.fc-dark {
+  --fc-panel-bg: #0e2018;
+  --fc-panel-border: #234a3b;
+  --fc-heading: #d7f5e7;
+  --fc-text: #cfe9dc;
+  --fc-muted-text: #8dbfa9;
+  --fc-chip-bg: #1c3d30;
+  --fc-chip-border: #2f5c49;
+  --fc-chip-text: #d9fbea;
+  --fc-chip-hover: #245040;
+  --fc-btn-bg: #1f5c44;
+  --fc-btn-border: #2c7357;
+  --fc-btn-hover: #27694e;
+  --fc-btn-text: #e6fff4;
+  --fc-path: #7fe3b3;
+  --fc-divider: #214435;
+  --fc-input-bg: #10281f;
+  --fc-input-border: #2c5a48;
+  --fc-input-text: #e6fff4;
+  --fc-input-focus: #4dae84;
+  --fc-link: #7fe3b3;
+  --fc-link-hover: #a8f5d0;
+  --fc-code-bg: #0a1a13;
+  --fc-code-border: #1e4e3b;
+  --fc-code-text: #98f4cc;
+  --fc-result-bg: #12291f;
+  --fc-result-border: #234a3b;
+  --fc-result-text: #a7d8c4;
+  --fc-ok-bg: #106b47;
+  --fc-ok-text: #7fe3b3;
+  --fc-err-bg: #b3261e;
+  --fc-err-text: #ff9b9b;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+}
+
 #freecode-overlay.fc-collapsed { display: none; }
 #freecode-overlay *, #freecode-overlay *::before, #freecode-overlay *::after {
   box-sizing: border-box;
@@ -81,7 +151,7 @@ const STYLE = `
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #E6E1E5;
+  color: var(--fc-heading);
   margin: 0;
 }
 
@@ -105,16 +175,16 @@ const STYLE = `
   height: 24px;
   padding: 2px 10px;
   border-radius: 999px;
-  background: #38304D;
-  color: #E8DEF8;
+  background: var(--fc-chip-bg);
+  color: var(--fc-chip-text);
   font-size: 12px;
-  font-weight: 500;
-  border: 1px solid rgba(56, 52, 68, 0.6);
+  font-weight: 600;
+  border: 1px solid var(--fc-chip-border);
   cursor: pointer;
   font-family: inherit;
   transition: background 0.15s;
 }
-#freecode-overlay .fc-chip:hover { background: #363244; }
+#freecode-overlay .fc-chip:hover { background: var(--fc-chip-hover); }
 
 #freecode-overlay .fc-icon-btn {
   display: inline-flex;
@@ -123,41 +193,41 @@ const STYLE = `
   width: 24px;
   height: 24px;
   border-radius: 999px;
-  background: #38304D;
-  color: #E8DEF8;
-  border: 1px solid rgba(56, 52, 68, 0.6);
+  background: var(--fc-chip-bg);
+  color: var(--fc-chip-text);
+  border: 1px solid var(--fc-chip-border);
   cursor: pointer;
   padding: 0;
   transition: background 0.15s;
 }
-#freecode-overlay .fc-icon-btn:hover { background: #363244; }
+#freecode-overlay .fc-icon-btn:hover { background: var(--fc-chip-hover); }
 #freecode-overlay .fc-icon-btn svg { width: 14px; height: 14px; fill: currentColor; }
 
 #freecode-overlay .fc-change-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 5px 13px;
-  border-radius: 10px;
-  background: #38304D;
-  color: #d6cded;
+  padding: 6px 15px;
+  border-radius: 12px;
+  background: var(--fc-btn-bg);
+  color: var(--fc-btn-text);
   font-size: 12px;
-  font-weight: 500;
-  border: 1px solid rgba(56, 52, 68, 0.4);
+  font-weight: 600;
+  border: 1px solid var(--fc-btn-border);
   cursor: pointer;
   font-family: inherit;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
   transition: background 0.15s, transform 0.1s;
 }
-#freecode-overlay .fc-change-btn:hover { background: #363244; }
+#freecode-overlay .fc-change-btn:hover { background: var(--fc-btn-hover); }
 #freecode-overlay .fc-change-btn:active { transform: scale(0.98); }
 #freecode-overlay .fc-change-btn:disabled { opacity: 0.55; cursor: default; }
 
 #freecode-overlay .fc-path {
   font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
   font-size: 12px;
-  font-weight: 500;
-  color: #7CE38B;
+  font-weight: 600;
+  color: var(--fc-path);
   word-break: break-all;
   user-select: text;
   letter-spacing: -0.01em;
@@ -165,7 +235,7 @@ const STYLE = `
 
 #freecode-overlay .fc-divider {
   border: none;
-  border-top: 1px solid rgba(56, 52, 68, 0.4);
+  border-top: 1px solid var(--fc-divider);
   margin: 0 -3px;
   width: calc(100% + 6px);
 }
@@ -178,20 +248,20 @@ const STYLE = `
 #freecode-overlay .fc-delay-row input {
   width: 54px;
   text-align: center;
-  background: #15121c;
-  border: 1px solid rgba(56, 52, 68, 0.8);
+  background: var(--fc-input-bg);
+  border: 1px solid var(--fc-input-border);
   border-radius: 8px;
   padding: 6px 8px;
   font-size: 14px;
-  font-weight: 500;
-  color: #E6E1E5;
+  font-weight: 600;
+  color: var(--fc-input-text);
   font-family: inherit;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 #freecode-overlay .fc-delay-row input:focus {
-  border-color: #D0BCFF;
-  box-shadow: 0 0 0 1px #D0BCFF;
+  border-color: var(--fc-input-focus);
+  box-shadow: 0 0 0 1px var(--fc-input-focus);
 }
 #freecode-overlay .fc-delay-row input::-webkit-inner-spin-button,
 #freecode-overlay .fc-delay-row input::-webkit-outer-spin-button {
@@ -205,7 +275,7 @@ const STYLE = `
 #freecode-overlay .fc-delay-label {
   font-size: 12px;
   font-weight: 500;
-  color: #CAC4D0;
+  color: var(--fc-muted-text);
 }
 
 #freecode-overlay .fc-save-row {
@@ -216,8 +286,8 @@ const STYLE = `
 }
 #freecode-overlay .fc-save-link {
   font-size: 12px;
-  font-weight: 500;
-  color: #D0BCFF;
+  font-weight: 600;
+  color: var(--fc-link);
   padding: 4px 8px;
   border-radius: 6px;
   cursor: pointer;
@@ -227,19 +297,20 @@ const STYLE = `
   transition: color 0.15s, background 0.15s;
 }
 #freecode-overlay .fc-save-link:hover {
-  color: #EADDFF;
-  background: rgba(208, 188, 255, 0.08);
+  color: var(--fc-link-hover);
+  background: rgba(77, 174, 132, 0.1);
 }
 
+/* Task code block — dark surface in both themes. */
 #freecode-overlay .fc-code-box {
-  background: #121017;
-  border: 1px solid rgba(56, 52, 68, 0.4);
-  border-radius: 10px;
-  padding: 9px;
+  background: var(--fc-code-bg);
+  border: 1px solid var(--fc-code-border);
+  border-radius: 12px;
+  padding: 10px;
   font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
   font-size: 10px;
   line-height: 1.55;
-  color: #d1d5db;
+  color: var(--fc-code-text);
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-word;
@@ -254,6 +325,24 @@ const STYLE = `
   color: inherit;
 }
 
+/* Result output block — soft surface, distinct from the code block. */
+#freecode-overlay .fc-result-box {
+  background: var(--fc-result-bg);
+  border: 1px solid var(--fc-result-border);
+  border-radius: 12px;
+  padding: 10px;
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--fc-result-text);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+  user-select: text;
+}
+
 #freecode-overlay .fc-status-row {
   display: flex;
   align-items: center;
@@ -266,11 +355,11 @@ const STYLE = `
   width: 16px;
   height: 16px;
   border-radius: 4px;
-  background: #137333;
+  background: var(--fc-ok-bg);
   color: #fff;
   flex-shrink: 0;
 }
-#freecode-overlay .fc-status-icon.fc-err-bg { background: #b3261e; }
+#freecode-overlay .fc-status-icon.fc-err-bg { background: var(--fc-err-bg); }
 #freecode-overlay .fc-status-icon svg {
   width: 12px;
   height: 12px;
@@ -280,15 +369,20 @@ const STYLE = `
 }
 #freecode-overlay .fc-status-text {
   font-size: 12px;
-  font-weight: 500;
-  color: #7CE38B;
+  font-weight: 600;
+  color: var(--fc-ok-text);
 }
-#freecode-overlay .fc-status-text.fc-err { color: #ff7b7b; }
+#freecode-overlay .fc-status-text.fc-err { color: var(--fc-err-text); }
 
 #freecode-overlay .fc-muted { opacity: 0.6; }
 #freecode-overlay .fc-hidden { display: none !important; }
 
 #freecode-toggle {
+  --fc-toggle-bg: #edf8f3;
+  --fc-toggle-border: #82cbab;
+  --fc-toggle-text: #0f3829;
+  --fc-toggle-hover: #dcf2e7;
+
   position: fixed;
   right: 16px;
   bottom: 16px;
@@ -298,17 +392,24 @@ const STYLE = `
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.05em;
-  color: #EADDFF;
-  background: #1C1924;
-  border: 1px solid rgba(208, 188, 255, 0.4);
+  color: var(--fc-toggle-text);
+  background: var(--fc-toggle-bg);
+  border: 1px solid var(--fc-toggle-border);
   border-radius: 24px;
   padding: 10px 16px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 10px 15px -3px rgba(16, 56, 43, 0.2);
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
-#freecode-toggle:hover { background: #23202E; }
+#freecode-toggle:hover { background: var(--fc-toggle-hover); }
+#freecode-toggle.fc-dark {
+  --fc-toggle-bg: #0e2018;
+  --fc-toggle-border: #2f5c49;
+  --fc-toggle-text: #d9fbea;
+  --fc-toggle-hover: #163026;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
 #freecode-toggle.fc-hidden { display: none; }
 `;
 
@@ -361,8 +462,32 @@ function injectFonts(): void {
   link.id = "freecode-fonts";
   link.rel = "stylesheet";
   link.href =
-    "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Roboto:wght@400;500;700&display=swap";
+    "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Roboto:wght@400;500;700&display=swap";
   document.head.append(pre1, pre2, link);
+}
+
+// ===== Theme =====
+
+/** True when the host page is in dark mode (z.ai sets class="dark" on <html>). */
+function isDarkPage(): boolean {
+  const html = document.documentElement;
+  return html.classList.contains("dark") || html.getAttribute("data-theme") === "dark";
+}
+
+/** Mirror the page theme onto the overlay panel and launcher. */
+function applyTheme(): void {
+  const dark = isDarkPage();
+  panel?.classList.toggle("fc-dark", dark);
+  toggleBtn?.classList.toggle("fc-dark", dark);
+}
+
+/** Keep the overlay theme in sync with the page. */
+function watchTheme(): void {
+  const observer = new MutationObserver(() => applyTheme());
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["class", "data-theme"],
+  });
 }
 
 // ===== Collapse / expand =====
@@ -537,7 +662,7 @@ export function resetTaskPanels(): void {
   resultSep?.classList.add("fc-hidden");
   resultBox?.classList.add("fc-hidden");
   if (taskCodeEl) taskCodeEl.textContent = "";
-  if (resultTextEl) resultTextEl.textContent = "";
+  if (resultTextEl) resultTextEl.textContent = "(no output)";
   if (resultStatusTextEl) {
     resultStatusTextEl.textContent = t("overlay.result.empty");
     resultStatusTextEl.className = "fc-status-text fc-muted";
@@ -639,11 +764,10 @@ export function injectOverlay(): void {
   statusRow.append(statusIconEl, resultStatusTextEl);
   resultBox.appendChild(statusRow);
 
-  const resultCodeBox = el("div", "fc-code-box", "(no output)");
-  resultTextEl = resultCodeBox;
-  resultBox.appendChild(resultCodeBox);
+  resultTextEl = el("div", "fc-result-box", "(no output)");
+  resultBox.appendChild(resultTextEl);
 
-  // Divider after the directory, before the delay section.
+  // Divider between the directory and the delay sections.
   const delaySep = el("hr", "fc-divider");
 
   root.append(
@@ -666,6 +790,10 @@ export function injectOverlay(): void {
   toggleBtn.title = t("overlay.expandTitle");
   toggleBtn.addEventListener("click", () => setCollapsed(false));
   document.body.appendChild(toggleBtn);
+
+  // Match the page theme now and on every change.
+  applyTheme();
+  watchTheme();
 
   // When the active conversation changes: refresh the directory and clear the
   // task/result panels so nothing from the previous chat lingers.
