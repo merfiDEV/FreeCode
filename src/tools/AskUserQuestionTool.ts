@@ -28,7 +28,8 @@ export function normalizeQuestions(raw: unknown): NormalizedQuestion[] {
   return raw.map((item, index) => {
     if (!item || typeof item !== "object") throw new Error("question " + (index + 1) + " must be an object");
     const rec = item as Record<string, unknown>;
-    const question = String(rec.question ?? "").trim();
+    // Accept a few common field spellings the model may reach for.
+    const question = String(rec.question ?? rec.text ?? rec.title ?? "").trim();
     if (!question) throw new Error("question " + (index + 1) + " must have non-empty text");
 
     if (!Array.isArray(rec.options) || rec.options.length !== 3) {
@@ -45,7 +46,8 @@ export function normalizeQuestions(raw: unknown): NormalizedQuestion[] {
         throw new Error("question " + (index + 1) + " option " + (optionIndex + 1) + " must be an object");
       }
       const opt = option as Record<string, unknown>;
-      const label = String(opt.label ?? "").trim();
+      // Accept label / value / text as the visible option text.
+      const label = String(opt.label ?? opt.value ?? opt.text ?? "").trim();
       if (!label) throw new Error("question " + (index + 1) + " option " + (optionIndex + 1) + " is empty");
       return {
         label,
@@ -75,7 +77,11 @@ export const AskUserQuestionTool: ToolDefinition<AskParams> = {
     try {
       questions = normalizeQuestions(params.questions);
     } catch (err) {
-      return fail("Invalid questions: " + (err as Error).message);
+      return fail(
+        "Invalid questions: " +
+          (err as Error).message +
+          '. Each item needs { question: string, options: [3 strings or {label}] }.',
+      );
     }
     if (typeof ctx.askUserQuestion !== "function") {
       return fail("askUserQuestion is not available in this window");
