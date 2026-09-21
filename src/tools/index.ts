@@ -13,6 +13,7 @@ import { OpenBrowserWindowTool, InjectJSTool, InjectPageJSTool } from "./Browser
 import { SkillListTool, SkillLoadTool, SkillExecuteTool } from "./SkillTools";
 import { AskUserQuestionTool } from "./AskUserQuestionTool";
 import { ReadClipboardTool, WriteClipboardTool } from "./ClipboardTool";
+import { WebFetchTool } from "./WebFetchTool";
 
 export { ToolRegistry } from "./ToolRegistry";
 export { JsRunner } from "./JsRunner";
@@ -55,6 +56,8 @@ export function createDefaultRegistry(): ToolRegistry {
     // Clipboard
     ReadClipboardTool,
     WriteClipboardTool,
+    // Network
+    WebFetchTool,
   ] as unknown as Array<import("./types").ToolDefinition<Record<string, unknown>>>;
   for (const tool of all) registry.register(tool);
   return registry;

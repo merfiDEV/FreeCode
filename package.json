@@ -44,6 +44,7 @@
   ],
   "devDependencies": {
     "@types/node": "^22.7.0",
+    "@types/turndown": "^5.0.6",
     "electron": "^33.0.0",
     "electron-builder": "^24.13.3",
     "png-to-ico": "^3.0.2",
@@ -92,6 +93,8 @@
     ]
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0"
+    "@joplin/turndown-plugin-gfm": "^1.0.68",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "turndown": "^7.2.4"
   }
 }
