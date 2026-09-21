@@ -1,109 +1,100 @@
-1: <path>D:\code\ICE\crulh\ZAIToType\package.json</path>
-2: <type>file</type>
-3: <content>
-4: 1: {
-5: 2:   "name": "freecode",
-6: 3:   "version": "0.2.0",
-7: 4:   "description": "freecode — desktop AI agent for z.ai (zero API cost)",
-8: 5:   "main": "dist/main/index.js",
-9: 6:   "scripts": {
-10: 7:     "build": "tsc && node scripts/copy-assets.js",
-11: 8:     "watch": "tsc -w",
-12: 9:     "start": "npm run build && electron .",
-13: 10:     "clean": "rimraf dist release",
-14: 11:     "icons": "node scripts/make-icon.js",
-15: 12:     "build:win": "npm run build && electron-builder --win --publish always",
-16: 13:     "build:win:local": "npm run build && electron-builder --win --publish never",
-17: 14:     "build:win:portable": "npm run build && electron-builder --win --config.win.target=portable --publish always",
-18: 15:     "build:win:portable:local": "npm run build && electron-builder --win --config.win.target=portable --publish never"
-19: 16:   },
-20: 17:   "keywords": [
-21: 18:     "z.ai",
-22: 19:     "electron",
-23: 20:     "ai",
-24: 21:     "agent",
-25: 22:     "freecode"
-26: 23:   ],
-27: 24:   "author": {
-28: 25:     "name": "MerfiDEV",
-29: 26:     "url": "https://github.com/merfiDEV"
-30: 27:   },
-31: 28:   "license": "MIT",
-32: 29:   "repository": {
-33: 30:     "type": "git",
-34: 31:     "url": "git+https://github.com/merfiDEV/FreeCode.git"
-35: 32:   },
-36: 33:   "bugs": {
-37: 34:     "url": "https://github.com/merfiDEV/FreeCode/issues"
-38: 35:   },
-39: 36:   "homepage": "https://github.com/merfiDEV/FreeCode#readme",
-40: 37:   "engines": {
-41: 38:     "node": ">=16.0.0"
-42: 39:   },
-43: 40:   "os": [
-44: 41:     "win32",
-45: 42:     "darwin",
-46: 43:     "linux"
-47: 44:   ],
-48: 45:   "devDependencies": {
-49: 46:     "@types/node": "^22.7.0",
-50: 47:     "@types/turndown": "^5.0.6",
-51: 48:     "electron": "^33.0.0",
-52: 49:     "electron-builder": "^24.13.3",
-53: 50:     "png-to-ico": "^3.0.2",
-54: 51:     "rimraf": "^6.0.1",
-55: 52:     "sharp": "^0.35.4",
-56: 53:     "typescript": "^5.6.2"
-57: 54:   },
-58: 55:   "build": {
-59: 56:     "appId": "com.freecode.freecode",
-60: 57:     "productName": "freecode",
-61: 58:     "publish": [
-62: 59:       {
-63: 60:         "provider": "github",
-64: 61:         "owner": "merfiDEV",
-65: 62:         "repo": "FreeCode",
-66: 63:         "releaseType": "release"
-67: 64:       }
-68: 65:     ],
-69: 66:     "directories": {
-70: 67:       "output": "release"
-71: 68:     },
-72: 69:     "win": {
-73: 70:       "target": [
-74: 71:         "nsis",
-75: 72:         "portable",
-76: 73:         "zip"
-77: 74:       ],
-78: 75:       "icon": "build/icon.ico",
-79: 76:       "artifactName": "freecode-win-v${version}-${arch}.${ext}"
-80: 77:     },
-81: 78:     "nsis": {
-82: 79:       "oneClick": false,
-83: 80:       "allowToChangeInstallationDirectory": true,
-84: 81:       "createDesktopShortcut": true,
-85: 82:       "createStartMenuShortcut": true,
-86: 83:       "artifactName": "freecode-win-v${version}.${ext}"
-87: 84:     },
-88: 85:     "portable": {
-89: 86:       "artifactName": "freecode-win-v${version}-portable.${ext}"
-90: 87:     },
-91: 88:     "files": [
-92: 89:       "dist/**/*",
-93: 90:       "build/icon.ico",
-94: 91:       "build/icon.png",
-95: 92:       "package.json"
-96: 93:     ]
-97: 94:   },
-98: 95:   "dependencies": {
-99: 96:     "@joplin/turndown-plugin-gfm": "^1.0.68",
-100: 97:     "@modelcontextprotocol/sdk": "^1.30.0",
-101: 98:     "turndown": "^7.2.4"
-102: 99:   }
-103: 100: }
-104: 101: 
-105: 
-106: (End of file. Total 101 lines.)
-107: </content>
-
-(End of file. Total 107 lines.)
+{
+  "name": "freecode",
+  "version": "0.2.0",
+  "description": "freecode — desktop AI agent for z.ai (zero API cost)",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "build": "tsc && node scripts/copy-assets.js",
+    "watch": "tsc -w",
+    "start": "npm run build && electron .",
+    "clean": "rimraf dist release",
+    "icons": "node scripts/make-icon.js",
+    "build:win": "npm run build && electron-builder --win --publish always",
+    "build:win:local": "npm run build && electron-builder --win --publish never",
+    "build:win:portable": "npm run build && electron-builder --win --config.win.target=portable --publish always",
+    "build:win:portable:local": "npm run build && electron-builder --win --config.win.target=portable --publish never"
+  },
+  "keywords": [
+    "z.ai",
+    "electron",
+    "ai",
+    "agent",
+    "freecode"
+  ],
+  "author": {
+    "name": "MerfiDEV",
+    "url": "https://github.com/merfiDEV"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/merfiDEV/FreeCode.git"
+  },
+  "bugs": {
+    "url": "https://github.com/merfiDEV/FreeCode/issues"
+  },
+  "homepage": "https://github.com/merfiDEV/FreeCode#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "os": [
+    "win32",
+    "darwin",
+    "linux"
+  ],
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "@types/turndown": "^5.0.6",
+    "electron": "^33.0.0",
+    "electron-builder": "^24.13.3",
+    "png-to-ico": "^3.0.2",
+    "rimraf": "^6.0.1",
+    "sharp": "^0.35.4",
+    "typescript": "^5.6.2"
+  },
+  "build": {
+    "appId": "com.freecode.freecode",
+    "productName": "freecode",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "merfiDEV",
+        "repo": "FreeCode",
+        "releaseType": "release"
+      }
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable",
+        "zip"
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "freecode-win-v${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "freecode-win-v${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "freecode-win-v${version}-portable.${ext}"
+    },
+    "files": [
+      "dist/**/*",
+      "build/icon.ico",
+      "build/icon.png",
+      "package.json"
+    ]
+  },
+  "dependencies": {
+    "@joplin/turndown-plugin-gfm": "^1.0.68",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "turndown": "^7.2.4"
+  }
+}
