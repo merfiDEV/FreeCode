@@ -1,5 +1,7 @@
 /**
- * Copy non-TS assets (prompt templates) into dist after tsc.
+ * Copy non-TS assets into dist after tsc.
+ *   - src/prompt/*        → dist/prompt/*        (agent prompt templates)
+ *   - src/preload/assets/* → dist/preload/assets/* (overlay images)
  */
 const fs = require("fs");
 const path = require("path");
@@ -15,5 +17,12 @@ function copyDir(src, dst) {
 }
 
 const root = path.join(__dirname, "..");
+
 copyDir(path.join(root, "src", "prompt"), path.join(root, "dist", "prompt"));
+
+const assetsSrc = path.join(root, "src", "preload", "assets");
+if (fs.existsSync(assetsSrc)) {
+  copyDir(assetsSrc, path.join(root, "dist", "preload", "assets"));
+}
+
 console.log("[freecode] assets copied to dist");

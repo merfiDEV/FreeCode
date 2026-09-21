@@ -6,6 +6,7 @@
  */
 import { sendMessage } from "./chat-input";
 import { ipc } from "./ipc";
+import { iconDataUri } from "./icon";
 import { t, setLanguage, detectLanguage, getLanguage, type Language } from "./i18n";
 
 let panel: HTMLElement | null = null;
@@ -378,37 +379,44 @@ const STYLE = `
 #freecode-overlay .fc-hidden { display: none !important; }
 
 #freecode-toggle {
-  --fc-toggle-bg: #edf8f3;
-  --fc-toggle-border: #82cbab;
-  --fc-toggle-text: #0f3829;
-  --fc-toggle-hover: #dcf2e7;
-
   position: fixed;
   right: 16px;
   bottom: 16px;
   z-index: 2147483000;
   cursor: pointer;
-  font-family: 'Roboto', 'Inter', system-ui, sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: var(--fc-toggle-text);
-  background: var(--fc-toggle-bg);
-  border: 1px solid var(--fc-toggle-border);
-  border-radius: 24px;
-  padding: 10px 16px;
-  box-shadow: 0 10px 15px -3px rgba(16, 56, 43, 0.2);
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: 0 10px 20px -6px rgba(16, 56, 43, 0.45);
+  transition: transform 0.15s, box-shadow 0.15s;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  overflow: hidden;
 }
-#freecode-toggle:hover { background: var(--fc-toggle-hover); }
-#freecode-toggle.fc-dark {
-  --fc-toggle-bg: #0e2018;
-  --fc-toggle-border: #2f5c49;
-  --fc-toggle-text: #d9fbea;
-  --fc-toggle-hover: #163026;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+#freecode-toggle:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 14px 24px -6px rgba(16, 56, 43, 0.5);
+}
+#freecode-toggle:active { transform: scale(0.97); }
+#freecode-toggle img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+}
+/* Fallback when the icon asset is unavailable. */
+#freecode-toggle.fc-fallback {
+  background: #1c4a38;
+  color: #98f4cc;
+  font-family: 'Roboto', 'Inter', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 #freecode-toggle.fc-hidden { display: none; }
 `;
@@ -474,11 +482,9 @@ function isDarkPage(): boolean {
   return html.classList.contains("dark") || html.getAttribute("data-theme") === "dark";
 }
 
-/** Mirror the page theme onto the overlay panel and launcher. */
+/** Mirror the page theme onto the overlay panel. */
 function applyTheme(): void {
-  const dark = isDarkPage();
-  panel?.classList.toggle("fc-dark", dark);
-  toggleBtn?.classList.toggle("fc-dark", dark);
+  panel?.classList.toggle("fc-dark", isDarkPage());
 }
 
 /** Keep the overlay theme in sync with the page. */
@@ -521,7 +527,10 @@ function applyTranslations(): void {
     langBtn.title = t("overlay.lang.switch");
   }
   if (collapseBtn) collapseBtn.title = t("overlay.collapse");
-  if (toggleBtn) toggleBtn.title = t("overlay.expandTitle");
+  if (toggleBtn) {
+    toggleBtn.title = t("overlay.expandTitle");
+    toggleBtn.setAttribute("aria-label", t("overlay.expandTitle"));
+  }
 
   // Status line: either the last result or the empty placeholder.
   if (resultStatusTextEl) {
@@ -786,8 +795,21 @@ export function injectOverlay(): void {
   toggleBtn = el("button");
   toggleBtn.id = "freecode-toggle";
   toggleBtn.classList.add("fc-hidden");
-  toggleBtn.textContent = "freecode";
   toggleBtn.title = t("overlay.expandTitle");
+  toggleBtn.setAttribute("aria-label", t("overlay.expandTitle"));
+
+  const iconUri = iconDataUri();
+  if (iconUri) {
+    const img = el("img");
+    img.src = iconUri;
+    img.alt = "freecode";
+    img.draggable = false;
+    toggleBtn.appendChild(img);
+  } else {
+    toggleBtn.classList.add("fc-fallback");
+    toggleBtn.textContent = "fc";
+  }
+
   toggleBtn.addEventListener("click", () => setCollapsed(false));
   document.body.appendChild(toggleBtn);
 
